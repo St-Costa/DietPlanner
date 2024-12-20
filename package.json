@@ -1,0 +1,25 @@
+{
+  "name": "dietplanner",
+  "version": "1.0.0",
+  "description": "Moving this tool from Obsidian (which made no sense to make it there...) to a more reasonable programming language",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/St-Costa/DietPlanner.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/St-Costa/DietPlanner/issues"
+  },
+  "homepage": "https://github.com/St-Costa/DietPlanner#readme",
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-packager": "^17.1.2"
+  }
+}
