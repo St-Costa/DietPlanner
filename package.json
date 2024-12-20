@@ -4,7 +4,7 @@
   "description": "Moving this tool from Obsidian (which made no sense to make it there...) to a more reasonable programming language",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
+    "start": "electron src/js/main.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

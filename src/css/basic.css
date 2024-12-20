@@ -1,0 +1,76 @@
+/* Impostazioni di base */
+body {
+    background-color: black;  /* Sfondo nero */
+    color: white;  /* Testo di colore bianco per contrasto */
+    font-family: Verdana, sans-serif;  /* Font di default per il testo */
+    font-size: 16px;  /* Dimensione di testo di base */
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Stile per il testo in grassetto (bold) */
+  b, strong {
+    font-weight: bold;
+    color: #00aeff;  /* Colore dorato per il grassetto */
+  }
+  
+  /* Stile per il testo in corsivo (italic) */
+  i, em {
+    font-style: italic;
+    color: #fdff90;  /* Colore grigio chiaro per il corsivo */
+  }
+  
+  /* Dimensioni di testo personalizzate */
+  p, span, li, a {
+    font-size: 16px;  /* Dimensione di testo standard */
+  }
+  
+  /* Stile per gli header */
+  h1, h2, h3, h4, h5, h6 {
+    text-align: center;
+    font-weight: bold;
+}
+  
+  h1 {
+    font-size: 36px;  /* Dimensione header 1 */
+  }
+  
+  h2 {
+    font-size: 30px;  /* Dimensione header 2 */
+  }
+  
+  h3 {
+    font-size: 24px;  /* Dimensione header 3 */
+  }
+  
+  h4 {
+    font-size: 20px;  /* Dimensione header 4 */
+  }
+  
+  h5 {
+    font-size: 18px;  /* Dimensione header 5 */
+  }
+  
+  h6 {
+    font-size: 16px;  /* Dimensione header 6 */
+  }
+  
+  /* Stile per i pulsanti */
+button {
+    background-color: #ff5e00;  /* Colore di sfondo verde */
+    color: white;  /* Colore del testo bianco */
+    font-size: 16px;  /* Dimensione del testo */
+    padding: 10px 20px;  /* Spazio interno (10px sopra e sotto, 20px ai lati) */
+    border: none;  /* Rimuove il bordo predefinito */
+    border-radius: 5px;  /* Angoli arrotondati */
+    cursor: pointer;  /* Cambia il cursore per indicare che è cliccabile */
+    margin: 10px;  /* Margini (spazio intorno al pulsante) */
+    transition: background-color 0.3s ease;  /* Transizione per cambiare colore al passaggio del mouse */
+  }
+  
+  /* Effetto hover per il pulsante */
+  button:hover {
+    background-color: #ff2600;  /* Colore di sfondo più scuro quando il mouse è sopra */
+  }
+  
+  

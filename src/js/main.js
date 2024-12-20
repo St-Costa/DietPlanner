@@ -12,7 +12,7 @@ function createWindow() {
     });
 
     // Carica il file HTML
-    win.loadFile('index.html');
+    win.loadFile('../views/index.html');
 }
 
 // Quando Electron è pronto, crea la finestra
