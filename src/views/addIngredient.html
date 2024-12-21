@@ -9,7 +9,11 @@
     <h1>Inserisci un Ingrediente</h1>
     <input type="text" id="ingredientInput" placeholder="Ingrediente" />
     <button id="addIngredient">Aggiungi Ingrediente</button>
-
-    <script src="../js/ingredient-window.js"></script> <!-- Carica il JS per gestire la logica nella finestra -->
+    <script>
+        document.getElementById('addIngredient').addEventListener('click', function() {
+            // Your JavaScript code here
+            alert('Ingrediente aggiunto!');
+        });
+    </script>
 </body>
 </html>
