@@ -3,14 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/addIngredient.css">
+    <link rel="stylesheet" href="../css/basic.css">
     <title>Inserisci Ingrediente</title>
+    <style>
+
+    </style>
 </head>
 <body>
-    <h1>Inserisci un Ingrediente</h1>
+    <h1>Add ingredient</h1>
     <input type="text" id="ingredientName" placeholder="Name" />
+    <div id="suggestionBox"></div>
     <input type="text" id="ingredientKcal" placeholder="Kcal" />
     <input type="text" id="ingredientProtein" placeholder="Protein" />
-    <button id="addIngredient">Aggiungi Ingrediente</button>
+    <button id="addIngredient">Add</button>
 
     <script>
         require('../js/addIngredient.js');

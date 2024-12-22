@@ -84,3 +84,17 @@ ipcMain.on('create-file', (event, fileName, fileContent) => {
         });
     }
 });
+
+// IPC listener to get file names for autocompletion
+ipcMain.on('get-ingredient-names', (event) => {
+    const directoryPath = path.join(__dirname, '../../Pantry/Ingredients');
+    fs.readdir(directoryPath, (err, files) => {
+        if (err) {
+            console.error('Failed to read directory:', err);
+            event.reply('ingredient-names-response', []);
+        } else {
+            const fileNames = files.map(file => path.parse(file).name);
+            event.reply('ingredient-names-response', fileNames);
+        }
+    });
+});
