@@ -18,6 +18,11 @@ const ingredientUnitNameInput = document.getElementById('ingredientUnitName');
 
 const suggestionBox_name = document.getElementById('suggestionBox_name');
 
+const div_resultOfCall = document.getElementById('resultOfClick');
+
+let isUpdateMode = false;
+let currentFocus = -1;
+
 // Function to check if all inputs are filled
 function checkInputs() {
     if (ingredientNameInput.value.trim() !== '' &&
@@ -35,8 +40,10 @@ function checkInputs() {
         ingredientUnitNameInput.value.trim() !== ''
         ) {
         addIngredientBtn.disabled = false;
+        addIngredientBtn.textContent = isUpdateMode ? 'Update ingredient' : 'Add ingredient';
     } else {
         addIngredientBtn.disabled = true;
+        addIngredientBtn.textContent = 'Empty inputs';
     }
 }
 
@@ -79,10 +86,27 @@ ipcRenderer.on('ingredient-names-response', (event, fileNames) => {
         const suggestions = fileNames.filter(name => name.toLowerCase().startsWith(input));
         showSuggestions(suggestions);
     });
+
+    ingredientNameInput.addEventListener('keydown', function (e) {
+        const suggestionItems = suggestionBox_name.getElementsByTagName('div');
+        if (e.key === 'ArrowDown') {
+            currentFocus++;
+            addActive(suggestionItems);
+        } else if (e.key === 'ArrowUp') {
+            currentFocus--;
+            addActive(suggestionItems);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (currentFocus > -1) {
+                if (suggestionItems) suggestionItems[currentFocus].click();
+            }
+        }
+    });
 });
 
 function showSuggestions(suggestions) {
     suggestionBox_name.innerHTML = '';
+    currentFocus = -1;
     suggestions.forEach(suggestion => {
         const div = document.createElement('div');
         div.textContent = suggestion;
@@ -92,9 +116,41 @@ function showSuggestions(suggestions) {
             checkInputs(); // Check inputs after selecting a suggestion
             // Request file content
             ipcRenderer.send('read-ingredient-file', suggestion);
+            isUpdateMode = true;
+            addIngredientBtn.textContent = 'Update ingredient';
+            ingredientNameInput.disabled = true;
         });
         suggestionBox_name.appendChild(div);
     });
+}
+
+function addActive(items) {
+    if (!items) return false;
+    removeActive(items);
+    if (currentFocus >= items.length) currentFocus = 0;
+    if (currentFocus < 0) currentFocus = items.length - 1;
+    items[currentFocus].classList.add('autocomplete-active');
+    adjustScroll(items[currentFocus]);
+}
+
+function removeActive(items) {
+    for (let i = 0; i < items.length; i++) {
+        items[i].classList.remove('autocomplete-active');
+    }
+}
+
+function adjustScroll(activeItem) {
+    const suggestionBox = suggestionBox_name;
+    const itemOffsetTop = activeItem.offsetTop;
+    const itemHeight = activeItem.offsetHeight;
+    const boxHeight = suggestionBox.clientHeight;
+    const scrollTop = suggestionBox.scrollTop;
+
+    if (itemOffsetTop < scrollTop) {
+        suggestionBox.scrollTop = itemOffsetTop;
+    } else if (itemOffsetTop + itemHeight > scrollTop + boxHeight) {
+        suggestionBox.scrollTop = itemOffsetTop + itemHeight - boxHeight;
+    }
 }
 
 ipcRenderer.on('read-ingredient-file-response', (event, data) => {
@@ -151,25 +207,45 @@ addIngredientBtn.addEventListener('click', function (event) {
     const fileName = `${ingredientName}.json`;
 
     // Send the JSON object to the main process
-    ipcRenderer.send('create-file', fileName, fileContent);
+    if (isUpdateMode) {
+        ipcRenderer.send('update-file', fileName, fileContent);
+    } else {
+        ipcRenderer.send('create-file', fileName, fileContent);
+    }
 });
 
 ipcRenderer.on('create-file-response', (event, status) => {
     if (status === 'success') {
-        alert('File created successfully');
+        //alert('File created successfully');
+        div_resultOfCall.innerHTML = 'File created successfully';
+        div_resultOfCall.style.color = '#4dff00';
     } else if (status === 'file-exists') {
-        alert('File already exists');
+        //alert('File already exists');
+        div_resultOfCall.innerHTML = 'File already exists';
+        div_resultOfCall.style.color = '#ff0000';
     } else {
-        alert('Failed to create file');
+        //alert('Failed to create file');
+        div_resultOfCall.innerHTML = 'Failed to create file';
+        div_resultOfCall.style.color = '#ff0000';
     }
+
+    addIngredientBtn.disabled = true;
+    setTimeout(() => {window.close();}, 1500);
 });
 
 ipcRenderer.on('update-file-response', (event, status) => {
     if (status === 'success') {
-        alert('File updated successfully');
+        //alert('File updated successfully');
+        div_resultOfCall.innerHTML = 'File updated successfully';
+        div_resultOfCall.style.color = '#4dff00';
     } else {
-        alert('Failed to update file');
+        //alert('Failed to update file');
+        div_resultOfCall.innerHTML = 'Failed to update file';
+        div_resultOfCall.style.color = '#ff0000';
     }
+
+    addIngredientBtn.disabled = true;
+    setTimeout(() => {window.close();}, 1500);
 });
 
 // Initially disable the button

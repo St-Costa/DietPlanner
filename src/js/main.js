@@ -111,3 +111,17 @@ ipcMain.on('read-ingredient-file', (event, fileName) => {
         }
     });
 });
+
+// IPC listener to update a file
+ipcMain.on('update-file', (event, fileName, fileContent) => {
+    const filePath = path.join(__dirname, '../../Pantry/Ingredients', fileName);
+    fs.writeFile(filePath, fileContent, (err) => {
+        if (err) {
+            console.error('Failed to update file:', err);
+            event.reply('update-file-response', 'failure');
+        } else {
+            console.log('File updated successfully');
+            event.reply('update-file-response', 'success');
+        }
+    });
+});
