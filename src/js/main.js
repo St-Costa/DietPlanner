@@ -1,54 +1,65 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const url = require('url');
 
-// Funzione per creare la finestra principale
-function createWindow() {
-    const win = new BrowserWindow({
-        width: 800,
+// List of views
+let indexView;
+
+function createWindow () {
+    indexView = new BrowserWindow({
+        width: 800, 
         height: 600,
         webPreferences: {
-            nodeIntegration: true
+            nodeIntegration: true,
+            contextIsolation: false,
+            enableRemoteModule: true
         }
     });
+  
+    indexView.loadURL(url.format({
+        pathname: path.join(__dirname, '../views/index.html'),
+        protocol: 'file:',
+        slashes: true
+    }));
 
-    // Carica il file HTML
-    win.loadFile('../views/index.html');
+    indexView.webContents.openDevTools();
+
+    indexView.on('closed', () => {
+        indexView = null;
+    });   
 }
 
-function createIngredientWindow() {
-    console.log('Sto creando un ingrediente');
+app.on('ready', createWindow);
 
-    const win = new BrowserWindow({
-        width: 800,
-        height: 600,
-        webPreferences: {
-            nodeIntegration: true
-        }
-    });
-
-    // Carica il file HTML
-    win.loadFile('../views/addIngredient.html');
-}
-
-// Quando Electron è pronto, crea la finestra
-app.whenReady().then(() => {
-    createWindow();
-
-    // Aggiungi il listener per l'evento "open-ingredient-window" inviato dal renderer process
-    ipcMain.on('open-ingredient-window', () => {
-        createIngredientWindow();
-    });
-
-    app.on('activate', () => {
-        if (BrowserWindow.getAllWindows().length === 0) {
-            createWindow();
-        }
-    });
-});
-
-// Esci quando tutte le finestre sono chiuse (tranne su macOS)
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit();
     }
+});
+
+app.on('activate', () => {
+    if (indexView === null) {
+        createWindow();
+    }
+});
+
+// IPC listener to open a new window
+ipcMain.on('open-add-ingredient-window', (event, arg) => {
+    let addIngredientView = new BrowserWindow({
+        width: 600,
+        height: 400,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+            enableRemoteModule: true
+        }
+    });
+
+    addIngredientView.loadURL(url.format({
+        pathname: path.join(__dirname, '../views/addIngredient.html'),
+        protocol: 'file:',
+        slashes: true
+    }));
+
+    addIngredientView.webContents.openDevTools();
 });
