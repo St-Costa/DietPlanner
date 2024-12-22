@@ -1,16 +1,42 @@
-#suggestionBox {
-    border: 1px solid #ccc;
+#suggestionBox_name {
     max-height: 100px;
     overflow-y: auto;
     position: absolute;
     background-color: white;
     z-index: 1000;
-    width: calc(100% - 22px); /* Adjust width to match input field */
+    color: black;
+    text-align: left;
+    width: 100%; /* Set width to 100% to match the input field */
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
 }
-#suggestionBox div {
+#suggestionBox_name div {
     padding: 8px;
     cursor: pointer;
 }
-#suggestionBox div:hover {
+#suggestionBox_name div:hover {
     background-color: #f0f0f0;
+}
+
+table {
+    margin: auto;
+}
+
+input {
+    width: 100%;
+}
+input.numberInput {
+    width: 40%;
+}
+.right {
+    text-align: right;
+}
+.left {
+    text-align: left;
+}
+.center{
+    text-align: center;
+}
+
+button:disabled, button:disabled:hover{
+    background-color: #925837;
 }

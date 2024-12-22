@@ -6,17 +6,79 @@
     <link rel="stylesheet" href="../css/addIngredient.css">
     <link rel="stylesheet" href="../css/basic.css">
     <title>Inserisci Ingrediente</title>
-    <style>
-
-    </style>
 </head>
 <body>
     <h1>Add ingredient</h1>
-    <input type="text" id="ingredientName" placeholder="Name" />
-    <div id="suggestionBox"></div>
-    <input type="text" id="ingredientKcal" placeholder="Kcal" />
-    <input type="text" id="ingredientProtein" placeholder="Protein" />
-    <button id="addIngredient">Add</button>
+    <br>
+
+    <table id="ingredientTable" class="table">
+        <tr>
+            <th class="right">Name: </th>
+            <td style="position: relative;">
+                <input type="text" id="ingredientName" placeholder="Name" />
+                <div id="suggestionBox_name"></div>
+            </td>
+        </tr>
+        <tr><th colspan="2"><hr style="width: 100%; border: 1px solid #ffffff;"></th></tr>
+        <tr><th colspan="2"><h5>Nutritional value</h5></th></tr>
+        <tr><td colspan="2"><p class="center">Every information must hold for 100g</p></td></tr>
+        <tr>
+            <th class="right">Kcal: </th>
+            <td class="left"><input type="number" id="ingredientKcal" class="numberInput"/></td>
+        </tr>
+        <tr>
+            <th class="right">Protein: </th>
+            <td class="left"><input type="number" id="ingredientProtein" class="numberInput" /> g</td>
+        </tr>
+        <tr>
+            <th class="right">Fiber: </th>
+            <td class="left"><input type="number" id="ingredientFiber" class="numberInput"/> g</td>
+        </tr>
+        <tr>
+            <th class="right">Fat: </th>
+            <td class="left"><input type="number" id="ingredientFat" class="numberInput"/> g</td>
+        </tr>
+        <tr>
+            <th class="right">Of which saturated: </th>
+            <td class="left"><input type="number" id="ingredientSaturated" class="numberInput"/> g</td>
+        </tr>
+        <tr>
+            <th class="right">Carbohydrate: </th>
+            <td class="left"><input type="number" id="ingredientCarb" class="numberInput"/> g</td>
+        </tr>
+        <tr>
+            <th class="right">Of which sugar: </th>
+            <td class="left"><input type="number" id="ingredientSugar" class="numberInput"/> g</td>
+        </tr>
+        <tr>
+            <th class="right">Salt: </th>
+            <td class="left"><input type="number" id="ingredientSalt" class="numberInput"/> g</td>
+        </tr>
+        <tr>
+            <th class="right">Cholesterol: </th>
+            <td class="left"><input type="number" id="ingredientChol" class="numberInput"/> mg</td>
+        </tr>
+        <tr><th colspan="2"><hr style="width: 100%; border: 1px solid #ffffff;"></th></tr>
+        <tr><th colspan="2"><h5>Product details</h5></th></tr>
+        <tr>
+            <th class="right">Cost: </th>
+            <td class="left"><input type="number" id="ingredientCost" class="numberInput"/> €</td>
+        </tr>
+        <tr>
+            <th class="right">Weight of a unit: </th>
+            <td class="left"><input type="number" id="ingredientUnitWeight" class="numberInput"/> g</td>
+        </tr>
+        <tr>
+            <th class="right">Name of the unit: </th>
+            <td class="left"><input type="text" id="ingredientUnitName"/></td>
+        </tr>
+    </table>
+
+    <br>
+
+    <div class="center">
+        <button id="addIngredient">Add ingredient</button>
+    </div> 
 
     <script>
         require('../js/addIngredient.js');

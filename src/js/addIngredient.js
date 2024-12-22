@@ -1,10 +1,60 @@
 const { ipcRenderer } = require('electron');
-const path = require('path');
-const url = require('url');
 
 const addIngredientBtn = document.getElementById('addIngredient');
+
 const ingredientNameInput = document.getElementById('ingredientName');
-const suggestionBox = document.getElementById('suggestionBox');
+const ingredientKcalInput = document.getElementById('ingredientKcal');
+const ingredientProteinInput = document.getElementById('ingredientProtein');
+const ingredientFiberInput = document.getElementById('ingredientFiber');
+const ingredientFatInput = document.getElementById('ingredientFat');
+const ingredientSaturatedInput = document.getElementById('ingredientSaturated');
+const ingredientCarbInput = document.getElementById('ingredientCarb');
+const ingredientSugarInput = document.getElementById('ingredientSugar');
+const ingredientSaltInput = document.getElementById('ingredientSalt');
+const ingredientCholInput = document.getElementById('ingredientChol');
+const ingredientCostInput = document.getElementById('ingredientCost');
+const ingredientUnitWeightInput = document.getElementById('ingredientUnitWeight');
+const ingredientUnitNameInput = document.getElementById('ingredientUnitName');
+
+const suggestionBox_name = document.getElementById('suggestionBox_name');
+
+// Function to check if all inputs are filled
+function checkInputs() {
+    if (ingredientNameInput.value.trim() !== '' &&
+        ingredientKcalInput.value.trim() !== '' &&
+        ingredientProteinInput.value.trim() !== '' &&
+        ingredientFiberInput.value.trim() !== '' &&
+        ingredientFatInput.value.trim() !== '' &&
+        ingredientSaturatedInput.value.trim() !== '' &&
+        ingredientCarbInput.value.trim() !== '' &&
+        ingredientSugarInput.value.trim() !== '' &&
+        ingredientSaltInput.value.trim() !== '' &&
+        ingredientCholInput.value.trim() !== '' &&
+        ingredientCostInput.value.trim() !== '' &&
+        ingredientUnitWeightInput.value.trim() !== '' &&
+        ingredientUnitNameInput.value.trim() !== ''
+        ) {
+        addIngredientBtn.disabled = false;
+    } else {
+        addIngredientBtn.disabled = true;
+    }
+}
+
+// Add event listeners to inputs
+ingredientNameInput.addEventListener('input', checkInputs);
+ingredientKcalInput.addEventListener('input', checkInputs);
+ingredientProteinInput.addEventListener('input', checkInputs);
+ingredientFiberInput.addEventListener('input', checkInputs);
+ingredientFatInput.addEventListener('input', checkInputs);
+ingredientSaturatedInput.addEventListener('input', checkInputs);
+ingredientCarbInput.addEventListener('input', checkInputs);
+ingredientSugarInput.addEventListener('input', checkInputs);
+ingredientSaltInput.addEventListener('input', checkInputs);
+ingredientCholInput.addEventListener('input', checkInputs);
+ingredientCostInput.addEventListener('input', checkInputs);
+ingredientUnitWeightInput.addEventListener('input', checkInputs);
+ingredientUnitNameInput.addEventListener('input', checkInputs);
+
 
 // Request ingredient names for autocompletion
 ipcRenderer.send('get-ingredient-names');
@@ -19,29 +69,50 @@ ipcRenderer.on('ingredient-names-response', (event, fileNames) => {
 });
 
 function showSuggestions(suggestions) {
-    suggestionBox.innerHTML = '';
+    suggestionBox_name.innerHTML = '';
     suggestions.forEach(suggestion => {
         const div = document.createElement('div');
         div.textContent = suggestion;
         div.addEventListener('click', function () {
             ingredientNameInput.value = suggestion;
-            suggestionBox.innerHTML = '';
+            suggestionBox_name.innerHTML = '';
+            checkInputs(); // Check inputs after selecting a suggestion
         });
-        suggestionBox.appendChild(div);
+        suggestionBox_name.appendChild(div);
     });
 }
 
 addIngredientBtn.addEventListener('click', function (event) {
     // Collect input values
-    const ingredientName = document.getElementById('ingredientName').value;
-    const ingredientKcal = document.getElementById('ingredientKcal').value;
-    const ingredientProtein = document.getElementById('ingredientProtein').value;
+    const ingredientName = ingredientNameInput.value;
+    const ingredientKcal = ingredientKcalInput.value;
+    const ingredientProtein = ingredientProteinInput.value;
+    const ingredientFiber = ingredientFiberInput.value;
+    const ingredientFat = ingredientFatInput.value;
+    const ingredientSaturated = ingredientSaturatedInput.value;
+    const ingredientCarb = ingredientCarbInput.value;
+    const ingredientSugar = ingredientSugarInput.value;
+    const ingredientSalt = ingredientSaltInput.value;
+    const ingredientChol = ingredientCholInput.value;
+    const ingredientCost = ingredientCostInput.value;
+    const ingredientUnitWeight = ingredientUnitWeightInput.value;
+    const ingredientUnitName = ingredientUnitNameInput.value;
 
     // Create a JSON object
     const fileContent = JSON.stringify({
         name: ingredientName,
         kcal: ingredientKcal,
-        protein: ingredientProtein
+        protein: ingredientProtein,
+        fiber: ingredientFiber,
+        fat: ingredientFat,
+        saturated: ingredientSaturated,
+        carb: ingredientCarb,
+        sugar: ingredientSugar,
+        salt: ingredientSalt,
+        chol: ingredientChol,
+        cost: ingredientCost,
+        unitWeight: ingredientUnitWeight,
+        unitName: ingredientUnitName
     }, null, 2); // Pretty print with 2 spaces
 
     const fileName = `${ingredientName}.json`;
@@ -59,3 +130,6 @@ ipcRenderer.on('create-file-response', (event, status) => {
         alert('Failed to create file');
     }
 });
+
+// Initially disable the button
+addIngredientBtn.disabled = true;
