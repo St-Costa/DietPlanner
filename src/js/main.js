@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const url = require('url');
+const fs = require('fs');
 
 // List of views
 let indexView;
@@ -62,4 +63,24 @@ ipcMain.on('open-add-ingredient-window', (event, arg) => {
     }));
 
     addIngredientView.webContents.openDevTools();
+});
+
+// IPC listener to create a file
+ipcMain.on('create-file', (event, fileName, fileContent) => {
+    const filePath = path.join(__dirname, '../../Pantry/Ingredients', fileName);
+    
+    if (fs.existsSync(filePath)) {
+        console.error('File already exists:', filePath);
+        event.reply('create-file-response', 'file-exists');
+    } else {
+        fs.writeFile(filePath, fileContent, (err) => {
+            if (err) {
+                console.error('Failed to create file:', err);
+                event.reply('create-file-response', 'failure');
+            } else {
+                console.log('File created successfully');
+                event.reply('create-file-response', 'success');
+            }
+        });
+    }
 });
