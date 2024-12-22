@@ -55,6 +55,19 @@ ingredientCostInput.addEventListener('input', checkInputs);
 ingredientUnitWeightInput.addEventListener('input', checkInputs);
 ingredientUnitNameInput.addEventListener('input', checkInputs);
 
+// Hide suggestion box when other inputs gain focus
+const allInputs = [
+    ingredientKcalInput, ingredientProteinInput, ingredientFiberInput,
+    ingredientFatInput, ingredientSaturatedInput, ingredientCarbInput,
+    ingredientSugarInput, ingredientSaltInput, ingredientCholInput,
+    ingredientCostInput, ingredientUnitWeightInput, ingredientUnitNameInput
+];
+
+allInputs.forEach(input => {
+    input.addEventListener('focus', () => {
+        suggestionBox_name.innerHTML = '';
+    });
+});
 
 // Request ingredient names for autocompletion
 ipcRenderer.send('get-ingredient-names');
@@ -77,10 +90,30 @@ function showSuggestions(suggestions) {
             ingredientNameInput.value = suggestion;
             suggestionBox_name.innerHTML = '';
             checkInputs(); // Check inputs after selecting a suggestion
+            // Request file content
+            ipcRenderer.send('read-ingredient-file', suggestion);
         });
         suggestionBox_name.appendChild(div);
     });
 }
+
+ipcRenderer.on('read-ingredient-file-response', (event, data) => {
+    if (data) {
+        ingredientKcalInput.value = data.kcal || '';
+        ingredientProteinInput.value = data.protein || '';
+        ingredientFiberInput.value = data.fiber || '';
+        ingredientFatInput.value = data.fat || '';
+        ingredientSaturatedInput.value = data.saturated || '';
+        ingredientCarbInput.value = data.carb || '';
+        ingredientSugarInput.value = data.sugar || '';
+        ingredientSaltInput.value = data.salt || '';
+        ingredientCholInput.value = data.chol || '';
+        ingredientCostInput.value = data.cost || '';
+        ingredientUnitWeightInput.value = data.unitWeight || '';
+        ingredientUnitNameInput.value = data.unitName || '';
+        checkInputs(); // Check inputs after populating fields
+    }
+});
 
 addIngredientBtn.addEventListener('click', function (event) {
     // Collect input values
@@ -128,6 +161,14 @@ ipcRenderer.on('create-file-response', (event, status) => {
         alert('File already exists');
     } else {
         alert('Failed to create file');
+    }
+});
+
+ipcRenderer.on('update-file-response', (event, status) => {
+    if (status === 'success') {
+        alert('File updated successfully');
+    } else {
+        alert('Failed to update file');
     }
 });
 
