@@ -65,6 +65,27 @@ ipcMain.on('open-add-ingredient-window', (event, arg) => {
     addIngredientView.webContents.openDevTools();
 });
 
+// IPC listener to open a new window
+ipcMain.on('open-ingredient-list-window', (event, arg) => {
+    let ingredientListView = new BrowserWindow({
+        width: 1200,
+        height: 400,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+            enableRemoteModule: true
+        }
+    });
+
+    ingredientListView.loadURL(url.format({
+        pathname: path.join(__dirname, '../views/ingredientsList.html'),
+        protocol: 'file:',
+        slashes: true
+    }));
+
+    ingredientListView.webContents.openDevTools();
+});
+
 // IPC listener to create a file
 ipcMain.on('create-file', (event, fileName, fileContent) => {
     const filePath = path.join(__dirname, '../../Pantry/Ingredients', fileName);
@@ -177,6 +198,24 @@ ipcMain.on('get-ingredient-types', (event) => {
         } else {
             const types = JSON.parse(data);
             event.reply('ingredient-types-response', types);
+        }
+    });
+});
+
+// IPC listener to get ingredient list
+ipcMain.on('get-ingredient-list', (event) => {
+    const directoryPath = path.join(__dirname, '../../Pantry/Ingredients');
+    fs.readdir(directoryPath, (err, files) => {
+        if (err) {
+            console.error('Failed to read directory:', err);
+            event.reply('ingredient-list-response', []);
+        } else {
+            const ingredients = files.map(file => {
+                const filePath = path.join(directoryPath, file);
+                const data = fs.readFileSync(filePath, 'utf8');
+                return JSON.parse(data);
+            });
+            event.reply('ingredient-list-response', ingredients);
         }
     });
 });

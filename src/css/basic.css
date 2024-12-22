@@ -74,5 +74,13 @@ button {
   button:hover {
     background-color: #ff2600;  /* Colore di sfondo più scuro quando il mouse è sopra */
   }
-  
-  
+
+.right {
+    text-align: right;
+}
+.left {
+    text-align: left;
+}
+.center{
+    text-align: center;
+}

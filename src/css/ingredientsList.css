@@ -1,0 +1,42 @@
+th {
+    position: relative;
+}
+
+.table {
+    width: 90%;
+    border-collapse: collapse;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.table th, .table td {
+    border-left: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    padding: 3px;
+}
+
+.table th {
+    background-color: #ff5e00;
+    text-align: center;
+}
+
+.number {
+    width: 40px; /* Set fixed width */
+    white-space: nowrap;
+    text-align: center;
+}
+
+/* Remove top and bottom borders for table rows */
+.table tr {
+    border-top: none;
+    border-bottom: none;
+}
+
+/* Remove the first and last vertical lines */
+.table th:first-child, .table td:first-child {
+    border-left: none;
+}
+
+.table th:last-child, .table td:last-child {
+    border-right: none;
+}

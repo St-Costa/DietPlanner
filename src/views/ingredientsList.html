@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/basic.css">
+    <link rel="stylesheet" href="../css/ingredientsList.css">
+    <title>Ingredient List</title>
+</head>
+<body>
+    <h1>Ingredient list</h1>
+    <br>
+
+    <div class="center">
+        <button id="to_addIngredientPage">Add ingredient</button>
+    </div> 
+
+    <br>
+
+    <table id="ingredientTable" class="table">
+        <thead>
+            <tr>
+                <th>Ingredient</th>
+                <th>Type</th>
+                <th class="number">Kcal<br></th>
+                <th class="number">Prot<br><span>(g)</span></th>
+                <th class="number">Fiber<br><span>(g)</span></th>
+                <th class="number">Fat<br><span>(g)</span></th>
+                <th class="number">Sat Fat<br><span>(g)</span></th>
+                <th class="number">Carb<br><span>(g)</span></th>
+                <th class="number">Sugar<br><span>(g)</span></th>
+                <th class="number">Salt<br><span>(g)</span></th>
+                <th class="number">Chol<br><span>(mg)</span></th>
+                <th class="number">Cost<br><span>(€)</span></th>
+                <th>Unit Weight</th>
+                <th>Unit Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Dynamic rows will be added here -->
+        </tbody>
+    </table>
+
+    <script>
+        require('../js/ingredientList.js');
+    </script>
+</body>
+</html>
