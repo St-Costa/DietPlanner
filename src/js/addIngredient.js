@@ -3,6 +3,7 @@ const { ipcRenderer } = require('electron');
 const addIngredientBtn = document.getElementById('addIngredient');
 
 const ingredientNameInput = document.getElementById('ingredientName');
+const ingredientTypeInput = document.getElementById('ingredientType');
 const ingredientKcalInput = document.getElementById('ingredientKcal');
 const ingredientProteinInput = document.getElementById('ingredientProtein');
 const ingredientFiberInput = document.getElementById('ingredientFiber');
@@ -17,6 +18,7 @@ const ingredientUnitWeightInput = document.getElementById('ingredientUnitWeight'
 const ingredientUnitNameInput = document.getElementById('ingredientUnitName');
 
 const suggestionBox_name = document.getElementById('suggestionBox_name');
+const suggestionBox_type = document.getElementById('suggestionBox_type');
 
 const div_resultOfCall = document.getElementById('resultOfClick');
 
@@ -26,6 +28,7 @@ let currentFocus = -1;
 // Function to check if all inputs are filled
 function checkInputs() {
     if (ingredientNameInput.value.trim() !== '' &&
+        ingredientTypeInput.value.trim() !== '' &&
         ingredientKcalInput.value.trim() !== '' &&
         ingredientProteinInput.value.trim() !== '' &&
         ingredientFiberInput.value.trim() !== '' &&
@@ -49,6 +52,7 @@ function checkInputs() {
 
 // Add event listeners to inputs
 ingredientNameInput.addEventListener('input', checkInputs);
+ingredientTypeInput.addEventListener('input', checkInputs);
 ingredientKcalInput.addEventListener('input', checkInputs);
 ingredientProteinInput.addEventListener('input', checkInputs);
 ingredientFiberInput.addEventListener('input', checkInputs);
@@ -64,7 +68,7 @@ ingredientUnitNameInput.addEventListener('input', checkInputs);
 
 // Hide suggestion box when other inputs gain focus
 const allInputs = [
-    ingredientKcalInput, ingredientProteinInput, ingredientFiberInput,
+    ingredientTypeInput, ingredientKcalInput, ingredientProteinInput, ingredientFiberInput,
     ingredientFatInput, ingredientSaturatedInput, ingredientCarbInput,
     ingredientSugarInput, ingredientSaltInput, ingredientCholInput,
     ingredientCostInput, ingredientUnitWeightInput, ingredientUnitNameInput
@@ -73,6 +77,7 @@ const allInputs = [
 allInputs.forEach(input => {
     input.addEventListener('focus', () => {
         suggestionBox_name.innerHTML = '';
+        suggestionBox_type.innerHTML = '';
     });
 });
 
@@ -80,11 +85,11 @@ allInputs.forEach(input => {
 ipcRenderer.send('get-ingredient-names');
 
 ipcRenderer.on('ingredient-names-response', (event, fileNames) => {
-    // Implement autocompletion
+    // Implement autocompletion for ingredient names
     ingredientNameInput.addEventListener('input', function () {
         const input = this.value.toLowerCase();
         const suggestions = fileNames.filter(name => name.toLowerCase().startsWith(input));
-        showSuggestions(suggestions);
+        showSuggestions(suggestions, suggestionBox_name, ingredientNameInput);
     });
 
     ingredientNameInput.addEventListener('keydown', function (e) {
@@ -104,23 +109,53 @@ ipcRenderer.on('ingredient-names-response', (event, fileNames) => {
     });
 });
 
-function showSuggestions(suggestions) {
-    suggestionBox_name.innerHTML = '';
+// Request ingredient types for autocompletion
+ipcRenderer.send('get-ingredient-types');
+
+ipcRenderer.on('ingredient-types-response', (event, types) => {
+    // Implement autocompletion for ingredient types
+    ingredientTypeInput.addEventListener('input', function () {
+        const input = this.value.toLowerCase();
+        const suggestions = types.filter(type => type.toLowerCase().startsWith(input));
+        showSuggestions(suggestions, suggestionBox_type, ingredientTypeInput);
+    });
+
+    ingredientTypeInput.addEventListener('keydown', function (e) {
+        const suggestionItems = suggestionBox_type.getElementsByTagName('div');
+        if (e.key === 'ArrowDown') {
+            currentFocus++;
+            addActive(suggestionItems);
+        } else if (e.key === 'ArrowUp') {
+            currentFocus--;
+            addActive(suggestionItems);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (currentFocus > -1) {
+                if (suggestionItems) suggestionItems[currentFocus].click();
+            }
+        }
+    });
+});
+
+function showSuggestions(suggestions, suggestionBox, inputElement) {
+    suggestionBox.innerHTML = '';
     currentFocus = -1;
     suggestions.forEach(suggestion => {
         const div = document.createElement('div');
         div.textContent = suggestion;
         div.addEventListener('click', function () {
-            ingredientNameInput.value = suggestion;
-            suggestionBox_name.innerHTML = '';
+            inputElement.value = suggestion;
+            suggestionBox.innerHTML = '';
             checkInputs(); // Check inputs after selecting a suggestion
-            // Request file content
-            ipcRenderer.send('read-ingredient-file', suggestion);
-            isUpdateMode = true;
-            addIngredientBtn.textContent = 'Update ingredient';
-            ingredientNameInput.disabled = true;
+            if (inputElement === ingredientNameInput) {
+                // Request file content
+                ipcRenderer.send('read-ingredient-file', suggestion);
+                isUpdateMode = true;
+                addIngredientBtn.textContent = 'Update ingredient';
+                ingredientNameInput.disabled = true;
+            }
         });
-        suggestionBox_name.appendChild(div);
+        suggestionBox.appendChild(div);
     });
 }
 
@@ -130,7 +165,7 @@ function addActive(items) {
     if (currentFocus >= items.length) currentFocus = 0;
     if (currentFocus < 0) currentFocus = items.length - 1;
     items[currentFocus].classList.add('autocomplete-active');
-    adjustScroll(items[currentFocus]);
+    adjustScroll(items[currentFocus], suggestionBox_name);
 }
 
 function removeActive(items) {
@@ -139,8 +174,7 @@ function removeActive(items) {
     }
 }
 
-function adjustScroll(activeItem) {
-    const suggestionBox = suggestionBox_name;
+function adjustScroll(activeItem, suggestionBox) {
     const itemOffsetTop = activeItem.offsetTop;
     const itemHeight = activeItem.offsetHeight;
     const boxHeight = suggestionBox.clientHeight;
@@ -155,6 +189,7 @@ function adjustScroll(activeItem) {
 
 ipcRenderer.on('read-ingredient-file-response', (event, data) => {
     if (data) {
+        ingredientTypeInput.value = data.type || '';
         ingredientKcalInput.value = data.kcal || '';
         ingredientProteinInput.value = data.protein || '';
         ingredientFiberInput.value = data.fiber || '';
@@ -174,6 +209,7 @@ ipcRenderer.on('read-ingredient-file-response', (event, data) => {
 addIngredientBtn.addEventListener('click', function (event) {
     // Collect input values
     const ingredientName = ingredientNameInput.value;
+    const ingredientType = ingredientTypeInput.value;
     const ingredientKcal = ingredientKcalInput.value;
     const ingredientProtein = ingredientProteinInput.value;
     const ingredientFiber = ingredientFiberInput.value;
@@ -190,6 +226,7 @@ addIngredientBtn.addEventListener('click', function (event) {
     // Create a JSON object
     const fileContent = JSON.stringify({
         name: ingredientName,
+        type: ingredientType,
         kcal: ingredientKcal,
         protein: ingredientProtein,
         fiber: ingredientFiber,
@@ -212,6 +249,9 @@ addIngredientBtn.addEventListener('click', function (event) {
     } else {
         ipcRenderer.send('create-file', fileName, fileContent);
     }
+
+    // Check and update ingredient type
+    ipcRenderer.send('check-update-ingredient-type', ingredientType);
 });
 
 ipcRenderer.on('create-file-response', (event, status) => {
@@ -246,6 +286,16 @@ ipcRenderer.on('update-file-response', (event, status) => {
 
     addIngredientBtn.disabled = true;
     setTimeout(() => {window.close();}, 1500);
+});
+
+ipcRenderer.on('check-update-ingredient-type-response', (event, status) => {
+    if (status === 'success') {
+        console.log('Ingredient type added successfully');
+    } else if (status === 'exists') {
+        console.log('Ingredient type already exists');
+    } else {
+        console.error('Failed to update ingredient type');
+    }
 });
 
 // Initially disable the button

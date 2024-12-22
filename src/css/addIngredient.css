@@ -1,4 +1,4 @@
-#suggestionBox_name {
+#suggestionBox_name, #suggestionBox_type {
     max-height: 100px;
     overflow-y: auto;
     position: absolute;
@@ -9,11 +9,11 @@
     width: 100%; /* Set width to 100% to match the input field */
     box-sizing: border-box; /* Include padding and border in the element's total width and height */
 }
-#suggestionBox_name div {
+#suggestionBox_name div, #suggestionBox_type div {
     padding: 8px;
     cursor: pointer;
 }
-#suggestionBox_name div:hover, .autocomplete-active {
+#suggestionBox_name div:hover, #suggestionBox_type div:hover, .autocomplete-active {
     background-color: #f0f0f0;
 }
 
