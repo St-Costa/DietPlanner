@@ -27,6 +27,11 @@ input {
 input.numberInput {
     width: 40%;
 }
+input.longInput {
+    width: 80%;
+}
+
+
 .right {
     text-align: right;
 }

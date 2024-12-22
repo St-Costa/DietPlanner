@@ -128,7 +128,7 @@ ipcMain.on('update-file', (event, fileName, fileContent) => {
 
 // IPC listener to check and update ingredient types
 ipcMain.on('check-update-ingredient-type', (event, ingredientType) => {
-    const filePath = path.join(__dirname, '../../Pantry', 'ingredients_types.json');
+    const filePath = path.join(__dirname, '../../Pantry', 'ingredients types.json');
     fs.readFile(filePath, 'utf8', (err, data) => {
         if (err) {
             if (err.code === 'ENOENT') {
