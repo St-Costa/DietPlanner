@@ -1,0 +1,16 @@
+{
+  "name": "Hotdog",
+  "type": "Meat",
+  "kcal": "250",
+  "protein": "11",
+  "fiber": "0",
+  "fat": "22",
+  "saturated": "8",
+  "carb": "1",
+  "sugar": "1",
+  "salt": "0",
+  "chol": "25",
+  "cost": "1",
+  "unitWeight": "250",
+  "unitName": "Single hotdog"
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Beef hamburger",
+  "type": "Meat",
+  "kcal": "250",
+  "protein": "26",
+  "fiber": "0",
+  "fat": "17",
+  "saturated": "7",
+  "carb": "0",
+  "sugar": "0",
+  "salt": "0.5",
+  "chol": "70",
+  "cost": "3",
+  "unitWeight": "200",
+  "unitName": "200g Beef meat"
+}
