@@ -1,23 +1,14 @@
 const { ipcRenderer } = require('electron');
 
 const ingredientTable = document.getElementById('ingredientTable').getElementsByTagName('tbody')[0];
-const ingredientHeader = document.getElementById('ingredientHeader');
-const typeHeader = document.getElementById('typeHeader');
-const kcalHeader = document.getElementById('kcalHeader');
-const proteinHeader = document.getElementById('protHeader');
-const fiberHeader = document.getElementById('fiberHeader');
-const fatHeader = document.getElementById('fatHeader');
-const saturatedHeader = document.getElementById('satfatHeader');
-const carbHeader = document.getElementById('carbHeader');
-const sugarHeader = document.getElementById('sugarHeader');
-const saltHeader = document.getElementById('saltHeader');
-const cholHeader = document.getElementById('cholHeader');
-const costHeader = document.getElementById('costHeader');
 const typeFilterContainer = document.getElementById('typeFilterContainer');
+const headers = document.querySelectorAll('th');
 
 let ingredients = [];
+let filteredIngredients = [];
 let sortOrder = 'asc'; // Initial sort order
 let currentSortColumn = 'name'; // Initial sort column
+let currentFilterType = ''; // Initial filter type
 
 // Request ingredient list
 ipcRenderer.send('get-ingredient-list');
@@ -27,101 +18,56 @@ ipcRenderer.send('get-ingredient-types');
 
 ipcRenderer.on('ingredient-list-response', (event, ingredientData) => {
     ingredients = ingredientData;
-    renderTable(ingredients);
+    filteredIngredients = ingredientData;
+    renderTable(filteredIngredients);
 });
 
 ipcRenderer.on('ingredient-types-response', (event, types) => {
     renderTypeButtons(types);
 });
 
-ingredientHeader.addEventListener('click', () => {
-    currentSortColumn = 'name';
-    sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-    sortAndRenderTable();
-});
-
-typeHeader.addEventListener('click', () => {
-    currentSortColumn = 'type';
-    sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-    sortAndRenderTable();
-});
-
-kcalHeader.addEventListener('click', () => {
-    currentSortColumn = 'kcal';
-    sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-    sortAndRenderTable();
-});
-
-proteinHeader.addEventListener('click', () => {
-    currentSortColumn = 'protein';
-    sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-    sortAndRenderTable();
-});
-
-fiberHeader.addEventListener('click', () => {
-    currentSortColumn = 'fiber';
-    sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-    sortAndRenderTable();
-});
-
-fatHeader.addEventListener('click', () => {
-    currentSortColumn = 'fat';
-    sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-    sortAndRenderTable();
-});
-
-saturatedHeader.addEventListener('click', () => {
-    currentSortColumn = 'saturated';
-    sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-    sortAndRenderTable();
-});
-
-carbHeader.addEventListener('click', () => {
-    currentSortColumn = 'carb';
-    sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-    sortAndRenderTable();
-});
-
-sugarHeader.addEventListener('click', () => {
-    currentSortColumn = 'sugar';
-    sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-    sortAndRenderTable();
-});
-
-saltHeader.addEventListener('click', () => {
-    currentSortColumn = 'salt';
-    sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-    sortAndRenderTable();
-});
-
-cholHeader.addEventListener('click', () => {
-    currentSortColumn = 'chol';
-    sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-    sortAndRenderTable();
-});
-
-costHeader.addEventListener('click', () => {
-    currentSortColumn = 'cost';
-    sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-    sortAndRenderTable();
-});
-
 function renderTypeButtons(types) {
+    // Add "All types" button
+    const allButton = document.createElement('button');
+    allButton.textContent = 'All types';
+    allButton.addEventListener('click', () => {
+        currentFilterType = '';
+        filterAndRenderTable();
+    });
+    typeFilterContainer.appendChild(allButton);
+
+    // Add buttons for each type
     types.forEach(type => {
         const button = document.createElement('button');
         button.textContent = type;
-        button.addEventListener('click', () => filterByType(type));
+        button.addEventListener('click', () => {
+            currentFilterType = type;
+            filterAndRenderTable();
+        });
         typeFilterContainer.appendChild(button);
     });
 }
 
-function filterByType(type) {
-    const filteredIngredients = ingredients.filter(ingredient => ingredient.type === type);
-    renderTable(filteredIngredients);
+function filterAndRenderTable() {
+    if (currentFilterType) {
+        filteredIngredients = ingredients.filter(ingredient => ingredient.type === currentFilterType);
+    } else {
+        filteredIngredients = ingredients;
+    }
+    sortAndRenderTable();
 }
 
+headers.forEach(header => {
+    header.addEventListener('click', () => {
+        const column = header.id.replace('Header', '').toLowerCase();
+        currentSortColumn = column;
+        sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+        sortAndRenderTable();
+    });
+});
+
 function sortAndRenderTable() {
-    const sortedIngredients = ingredients.sort((a, b) => {
+    const sortedIngredients = filteredIngredients.sort((a, b) => {
         const valA = isNaN(a[currentSortColumn]) ? a[currentSortColumn] : Number(a[currentSortColumn]);
         const valB = isNaN(b[currentSortColumn]) ? b[currentSortColumn] : Number(b[currentSortColumn]);
 

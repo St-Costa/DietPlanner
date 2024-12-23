@@ -1,0 +1,16 @@
+{
+  "name": "Milk",
+  "type": "Lactose product",
+  "kcal": "64",
+  "protein": "3.3",
+  "fiber": "0",
+  "fat": "3.6",
+  "saturated": "2.3",
+  "carb": "4.8",
+  "sugar": "4.8",
+  "salt": "0",
+  "chol": "10",
+  "cost": "0.1",
+  "unitWeight": "1000",
+  "unitName": "Milk carton, 1L"
+}

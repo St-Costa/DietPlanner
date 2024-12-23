@@ -38,9 +38,7 @@ function checkInputs() {
         ingredientSugarInput.value.trim() !== '' &&
         ingredientSaltInput.value.trim() !== '' &&
         ingredientCholInput.value.trim() !== '' &&
-        ingredientCostInput.value.trim() !== '' &&
-        ingredientUnitWeightInput.value.trim() !== '' &&
-        ingredientUnitNameInput.value.trim() !== ''
+        ingredientCostInput.value.trim() !== ''
         ) {
         addIngredientBtn.disabled = false;
         addIngredientBtn.textContent = isUpdateMode ? 'Update ingredient' : 'Add ingredient';
@@ -84,6 +82,9 @@ allInputs.forEach(input => {
 // Request ingredient names for autocompletion
 ipcRenderer.send('get-ingredient-names');
 
+// Request ingredient types for autocompletion
+ipcRenderer.send('get-ingredient-types');
+
 ipcRenderer.on('ingredient-names-response', (event, fileNames) => {
     // Implement autocompletion for ingredient names
     ingredientNameInput.addEventListener('input', function () {
@@ -108,9 +109,6 @@ ipcRenderer.on('ingredient-names-response', (event, fileNames) => {
         }
     });
 });
-
-// Request ingredient types for autocompletion
-ipcRenderer.send('get-ingredient-types');
 
 ipcRenderer.on('ingredient-types-response', (event, types) => {
     // Implement autocompletion for ingredient types

@@ -2,22 +2,29 @@ th {
     position: relative;
 }
 
-.table {
+table {
     width: 90%;
     border-collapse: collapse;
     margin-left: auto;
     margin-right: auto;
 }
 
-.table th, .table td {
+.table_border th, .table_border td {
     border-left: 1px solid #ddd;
     border-right: 1px solid #ddd;
     padding: 3px;
+    white-space: nowrap; /* Prevent text from wrapping */
 }
 
 th {
     background-color: #ff5e00;
     text-align: center;
+
+    /* Make the table header non-selectable */
+    user-select: none;
+    -webkit-user-select: none; /* For Safari */
+    -moz-user-select: none; /* For Firefox */
+    -ms-user-select: none; /* For Internet Explorer/Edge */
 }
 
 th.ordered:hover {

@@ -147,57 +147,24 @@ ipcMain.on('update-file', (event, fileName, fileContent) => {
     });
 });
 
-// IPC listener to check and update ingredient types
-ipcMain.on('check-update-ingredient-type', (event, ingredientType) => {
-    const filePath = path.join(__dirname, '../../Pantry', 'ingredients types.json');
-    fs.readFile(filePath, 'utf8', (err, data) => {
-        if (err) {
-            if (err.code === 'ENOENT') {
-                // File does not exist, create it with the new type
-                const types = [ingredientType];
-                fs.writeFile(filePath, JSON.stringify(types, null, 2), (err) => {
-                    if (err) {
-                        console.error('Failed to create file:', err);
-                        event.reply('check-update-ingredient-type-response', 'failure');
-                    } else {
-                        console.log('File created successfully');
-                        event.reply('check-update-ingredient-type-response', 'success');
-                    }
-                });
-            } else {
-                console.error('Failed to read file:', err);
-                event.reply('check-update-ingredient-type-response', 'failure');
-            }
-        } else {
-            const types = JSON.parse(data);
-            if (!types.includes(ingredientType)) {
-                types.push(ingredientType);
-                fs.writeFile(filePath, JSON.stringify(types, null, 2), (err) => {
-                    if (err) {
-                        console.error('Failed to update file:', err);
-                        event.reply('check-update-ingredient-type-response', 'failure');
-                    } else {
-                        console.log('File updated successfully');
-                        event.reply('check-update-ingredient-type-response', 'success');
-                    }
-                });
-            } else {
-                event.reply('check-update-ingredient-type-response', 'exists');
-            }
-        }
-    });
-});
-
-// IPC listener to get ingredient types for autocompletion
+// IPC listener to get ingredient types from all ingredient files
 ipcMain.on('get-ingredient-types', (event) => {
-    const filePath = path.join(__dirname, '../../Pantry', 'ingredients types.json');
-    fs.readFile(filePath, 'utf8', (err, data) => {
+    const directoryPath = path.join(__dirname, '../../Pantry/Ingredients');
+    fs.readdir(directoryPath, (err, files) => {
         if (err) {
-            console.error('Failed to read file:', err);
+            console.error('Failed to read directory:', err);
             event.reply('ingredient-types-response', []);
         } else {
-            const types = JSON.parse(data);
-            event.reply('ingredient-types-response', types);
+            const types = new Set();
+            files.forEach(file => {
+                const filePath = path.join(directoryPath, file);
+                const data = fs.readFileSync(filePath, 'utf8');
+                const ingredient = JSON.parse(data);
+                if (ingredient.type) {
+                    types.add(ingredient.type);
+                }
+            });
+            event.reply('ingredient-types-response', Array.from(types));
         }
     });
 });
