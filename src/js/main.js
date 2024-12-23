@@ -5,6 +5,7 @@ const fs = require('fs');
 
 // List of views
 let indexView;
+let addIngredientView;
 
 function createWindow () {
     indexView = new BrowserWindow({
@@ -47,8 +48,8 @@ app.on('activate', () => {
 // IPC listener to open a new window
 ipcMain.on('open-add-ingredient-window', (event, arg) => {
     let addIngredientView = new BrowserWindow({
-        width: 600,
-        height: 400,
+        width: 500,
+        height: 760,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
@@ -63,13 +64,22 @@ ipcMain.on('open-add-ingredient-window', (event, arg) => {
     }));
 
     addIngredientView.webContents.openDevTools();
+
+    addIngredientView.on('closed', () => {
+        addIngredientView = null;
+        // Send a message to the renderer process to refresh the table
+        BrowserWindow.getAllWindows().forEach(win => {
+            win.webContents.send('refresh-ingredient-list');
+          });
+
+    });
 });
 
 // IPC listener to open a new window
 ipcMain.on('open-ingredient-list-window', (event, arg) => {
     let ingredientListView = new BrowserWindow({
-        width: 1200,
-        height: 400,
+        width: 1100,
+        height: 500,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,

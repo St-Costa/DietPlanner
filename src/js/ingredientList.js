@@ -10,6 +10,12 @@ let sortOrder = 'asc'; // Initial sort order
 let currentSortColumn = 'name'; // Initial sort column
 let currentFilterType = ''; // Initial filter type
 
+const addIngredientBtn = document.getElementById('to_addIngredientPage');
+
+addIngredientBtn.addEventListener('click', function (event) {
+    ipcRenderer.send('open-add-ingredient-window');
+});
+
 // Request ingredient list
 ipcRenderer.send('get-ingredient-list');
 
@@ -24,6 +30,12 @@ ipcRenderer.on('ingredient-list-response', (event, ingredientData) => {
 
 ipcRenderer.on('ingredient-types-response', (event, types) => {
     renderTypeButtons(types);
+});
+
+// Listen for the refresh-ingredient-list message
+ipcRenderer.on('refresh-ingredient-list', () => {
+    console.log("Refreshing ingredients");
+    ipcRenderer.send('get-ingredient-list');
 });
 
 function renderTypeButtons(types) {

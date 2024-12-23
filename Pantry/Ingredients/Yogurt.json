@@ -1,0 +1,16 @@
+{
+  "name": "Yogurt",
+  "type": "Lactose product",
+  "kcal": "61",
+  "protein": "3.5",
+  "fiber": "0",
+  "fat": "3.3",
+  "saturated": "2",
+  "carb": "4.7",
+  "sugar": "4.7",
+  "salt": "0",
+  "chol": "13",
+  "cost": "0.3",
+  "unitWeight": "250",
+  "unitName": "250g container"
+}
