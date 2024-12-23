@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/basic.css">
+    <link rel="stylesheet" href="../css/addRecipe.css">
+    <title>Add Recipe</title>
+</head>
+<body>
+
+
+    <h1>Add Recipe</h1>
+
+    <br>
+    
+    <table>
+        <tr>
+            <th class="right">Ingredient:</th>
+            <td colspan="2">
+                <input type="text" id="ingredientName">
+                <div id="suggestionBox"></div>
+            </td>
+        </tr>
+        <tr>
+            <th class="right">Quantity:</th>
+            <td class="numberInput" >
+                <input type="number" id="quantityGrams">
+            </td>
+            <td class="left">
+                g
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td class="left" colspan="2">or</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td class="numberInput">
+                <input type="number" id="quantityUnit"  placeholder="x∈[0,1]">
+            </td>
+            <td class="left">
+                of <div id="unitWeight">(unit weight)</div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2"></td>
+            <td class="left">
+                of <span id="unitName">(unit name)</span>
+            </td>
+        </tr>
+    </table>
+
+    
+
+    <script>
+        require('../js/addRecipe.js');
+    </script>
+</body>
+</html>
+

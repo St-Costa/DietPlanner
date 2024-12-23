@@ -1,4 +1,4 @@
-#suggestionBox_name, #suggestionBox_type {
+#suggestionBox {
     max-height: 100px;
     overflow-y: auto;
     position: absolute;
@@ -9,11 +9,11 @@
     width: 100%; /* Set width to 100% to match the input field */
     box-sizing: border-box; /* Include padding and border in the element's total width and height */
 }
-#suggestionBox_name div, #suggestionBox_type div {
+#suggestionBox div {
     padding: 8px;
     cursor: pointer;
 }
-#suggestionBox_name div:hover, #suggestionBox_type div:hover, .autocomplete-active {
+#suggestionBox div.autocomplete-active {
     background-color: #f0f0f0;
 }
 
@@ -21,16 +21,19 @@ table {
     margin: auto;
 }
 
+
 input {
     width: 100%;
 }
-input.numberInput {
-    width: 40%;
+.numberInput {
+    width: 20%;
+    padding-right: 10px;
 }
-input.longInput {
+.longInput {
     width: 80%;
 }
 
-button:disabled, button:disabled:hover{
-    background-color: #925837;
+
+#unitWeight, #unitName {
+    display: inline-block;
 }

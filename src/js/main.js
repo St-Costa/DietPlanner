@@ -76,6 +76,27 @@ ipcMain.on('open-add-ingredient-window', (event, arg) => {
 });
 
 // IPC listener to open a new window
+ipcMain.on('open-add-recipe-window', (event, arg) => {
+    let addIngredientView = new BrowserWindow({
+        width: 500,
+        height: 760,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+            enableRemoteModule: true
+        }
+    });
+
+    addIngredientView.loadURL(url.format({
+        pathname: path.join(__dirname, '../views/addRecipe.html'),
+        protocol: 'file:',
+        slashes: true
+    }));
+
+    addIngredientView.webContents.openDevTools();
+});
+
+// IPC listener to open a new window
 ipcMain.on('open-ingredient-list-window', (event, arg) => {
     let ingredientListView = new BrowserWindow({
         width: 1100,
