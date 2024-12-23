@@ -15,9 +15,13 @@ th {
     padding: 3px;
 }
 
-.table th {
+th {
     background-color: #ff5e00;
     text-align: center;
+}
+
+th.ordered:hover {
+    cursor: pointer;
 }
 
 .number {

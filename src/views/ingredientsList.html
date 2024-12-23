@@ -17,21 +17,30 @@
 
     <br>
 
+    <table>
+        <tr>
+            <td>Filter by type: </td>
+            <td id="typeFilterContainer">
+                <!-- Buttons will be dynamically added here -->
+            </td>
+        </tr>
+    </table>
+
     <table id="ingredientTable" class="table">
         <thead>
             <tr>
-                <th>Ingredient</th>
-                <th>Type</th>
-                <th class="number">Kcal<br></th>
-                <th class="number">Prot<br><span>(g)</span></th>
-                <th class="number">Fiber<br><span>(g)</span></th>
-                <th class="number">Fat<br><span>(g)</span></th>
-                <th class="number">Sat Fat<br><span>(g)</span></th>
-                <th class="number">Carb<br><span>(g)</span></th>
-                <th class="number">Sugar<br><span>(g)</span></th>
-                <th class="number">Salt<br><span>(g)</span></th>
-                <th class="number">Chol<br><span>(mg)</span></th>
-                <th class="number">Cost<br><span>(€)</span></th>
+                <th id="ingredientHeader" class="ordered">Ingredient</th>
+                <th id="typeHeader" class="ordered">Type</th>
+                <th id="kcalHeader" class="number ordered">Kcal<br></th>
+                <th id="protHeader" class="number ordered">Prot<br><span>(g)</span></th>
+                <th id="fiberHeader" class="number ordered">Fiber<br><span>(g)</span></th>
+                <th id="fatHeader" class="number ordered">Fat<br><span>(g)</span></th>
+                <th id="satfatHeader" class="number ordered">Sat Fat<br><span>(g)</span></th>
+                <th id="carbHeader" class="number ordered">Carb<br><span>(g)</span></th>
+                <th id="sugarHeader" class="number ordered">Sugar<br><span>(g)</span></th>
+                <th id="saltHeader" class="number ordered">Salt<br><span>(g)</span></th>
+                <th id="cholHeader" class="number ordered">Chol<br><span>(mg)</span></th>
+                <th id="costHeader" class="number ordered">Cost<br><span>(€)</span></th>
                 <th>Unit Weight</th>
                 <th>Unit Name</th>
             </tr>
