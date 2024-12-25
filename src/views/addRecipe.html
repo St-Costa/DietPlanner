@@ -28,20 +28,16 @@
                 <input type="number" id="quantityGrams">
             </td>
             <td class="left">
-                g
+                g or
             </td>
-        </tr>
-        <tr>
-            <td></td>
-            <td class="left" colspan="2">or</td>
         </tr>
         <tr>
             <td></td>
             <td class="numberInput">
-                <input type="number" id="quantityUnit"  placeholder="x∈[0,1]">
+                <input type="number" id="quantityUnit" placeholder="x∈[0,inf]" min="0" step="0.01" oninput="validity.valid||(value='');">
             </td>
             <td class="left">
-                of <div id="unitWeight">(unit weight)</div>
+                of <div id="unitWeight">(unit weight) g</div> 
             </td>
         </tr>
         <tr>

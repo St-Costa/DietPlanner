@@ -2,8 +2,13 @@ const { ipcRenderer } = require('electron');
 
 const ingredientNameInput = document.getElementById('ingredientName');
 const suggestionBox = document.getElementById('suggestionBox');
+const unitWeightDiv = document.getElementById('unitWeight');
+const unitNameSpan = document.getElementById('unitName');
+const quantityGramsInput = document.getElementById('quantityGrams');
+const quantityUnitInput = document.getElementById('quantityUnit');
 
 let currentFocus = -1;
+let unitWeight = 0;
 
 // Request ingredient names for autocompletion
 ipcRenderer.send('get-ingredient-names');
@@ -43,6 +48,8 @@ function showSuggestions(suggestions) {
         div.addEventListener('click', function () {
             ingredientNameInput.value = suggestion;
             suggestionBox.innerHTML = '';
+            // Request file content
+            ipcRenderer.send('read-ingredient-file', suggestion);
         });
         div.addEventListener('mouseover', function () {
             removeActive(suggestionBox.getElementsByTagName('div'));
@@ -58,6 +65,49 @@ function showSuggestions(suggestions) {
     suggestionBox.style.top = `${rect.bottom}px`;
     suggestionBox.style.width = `${rect.width}px`;
 }
+
+ipcRenderer.on('read-ingredient-file-response', (event, data) => {
+    if (data) {
+        if (data.unitWeight) {
+            unitWeight = parseFloat(data.unitWeight);
+            unitWeightDiv.textContent = `${unitWeight} g`;
+            unitWeightDiv.style.color = '#ff5e00';
+        } else {
+            unitWeight = 0;
+            unitWeightDiv.textContent = '(unit weight)';
+        }
+        if (data.unitName) {
+            unitNameSpan.textContent = data.unitName;
+            unitNameSpan.style.color = '#ff5e00';
+        } else {
+            unitNameSpan.textContent = '(unit name)';
+        }
+    }
+});
+
+quantityGramsInput.addEventListener('input', function () {
+    if (unitWeight > 0) {
+        const grams = parseFloat(this.value);
+        if (!isNaN(grams)) {
+            const units = grams / unitWeight;
+            quantityUnitInput.value = units.toFixed(2);
+        } else {
+            quantityUnitInput.value = '';
+        }
+    }
+});
+
+quantityUnitInput.addEventListener('input', function () {
+    if (unitWeight > 0) {
+        const units = parseFloat(this.value);
+        if (!isNaN(units)) {
+            const grams = units * unitWeight;
+            quantityGramsInput.value = grams.toFixed(2);
+        } else {
+            quantityGramsInput.value = '';
+        }
+    }
+});
 
 function addActive(items) {
     if (!items) return false;

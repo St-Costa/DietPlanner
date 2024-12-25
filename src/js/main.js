@@ -151,9 +151,9 @@ ipcMain.on('get-ingredient-names', (event) => {
     });
 });
 
-// IPC listener to read file content
-ipcMain.on('read-ingredient-file', (event, fileName) => {
-    const filePath = path.join(__dirname, '../../Pantry/Ingredients', `${fileName}.json`);
+// IPC listener to read ingredient file content
+ipcMain.on('read-ingredient-file', (event, ingredientName) => {
+    const filePath = path.join(__dirname, '../../Pantry/Ingredients', `${ingredientName}.json`);
     fs.readFile(filePath, 'utf8', (err, data) => {
         if (err) {
             console.error('Failed to read file:', err);
