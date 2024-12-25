@@ -164,6 +164,33 @@ ipcMain.on('read-ingredient-file', (event, ingredientName) => {
     });
 });
 
+// IPC listener to get file names for autocompletion
+ipcMain.on('get-recipe-names', (event) => {
+    const directoryPath = path.join(__dirname, '../../Pantry/Recipes');
+    fs.readdir(directoryPath, (err, files) => {
+        if (err) {
+            console.error('Failed to read directory:', err);
+            event.reply('recipe-names-response', []);
+        } else {
+            const fileNames = files.map(file => path.parse(file).name);
+            event.reply('recipe-names-response', fileNames);
+        }
+    });
+});
+
+// IPC listener to read recipe file content
+ipcMain.on('read-recipe-file', (event, recipeName) => {
+    const filePath = path.join(__dirname, '../../Pantry/Recipes', `${recipeName}.json`);
+    fs.readFile(filePath, 'utf8', (err, data) => {
+        if (err) {
+            console.error('Failed to read file:', err);
+            event.reply('read-recipe-file-response', null);
+        } else {
+            event.reply('read-recipe-file-response', JSON.parse(data));
+        }
+    });
+});
+
 // IPC listener to update a file
 ipcMain.on('update-file', (event, fileName, fileContent) => {
     const filePath = path.join(__dirname, '../../Pantry/Ingredients', fileName);

@@ -8,6 +8,8 @@ const quantityGramsInput = document.getElementById('quantityGrams');
 const quantityUnitInput = document.getElementById('quantityUnit');
 const fractionRow = document.getElementById('fractionRow');
 const unitNameRow = document.getElementById('unitNameRow');
+const recipeNameInput = document.getElementById('recipeName');
+const suggestionBoxRecipe = document.getElementById('suggestionBox_recipe');
 
 let currentFocus = -1;
 let unitWeight = 0;
@@ -15,11 +17,14 @@ let unitWeight = 0;
 // Request ingredient names for autocompletion
 ipcRenderer.send('get-ingredient-names');
 
+// Request recipe names for autocompletion
+ipcRenderer.send('get-recipe-names');
+
 ipcRenderer.on('ingredient-names-response', (event, fileNames) => {
     ingredientNameInput.addEventListener('input', function () {
         const input = this.value.toLowerCase();
         const suggestions = fileNames.filter(name => name.toLowerCase().includes(input));
-        showSuggestions(suggestions);
+        showSuggestions(suggestions, suggestionBox, ingredientNameInput);
     });
 
     ingredientNameInput.addEventListener('keydown', function (e) {
@@ -27,9 +32,15 @@ ipcRenderer.on('ingredient-names-response', (event, fileNames) => {
         if (e.key === 'ArrowDown') {
             currentFocus++;
             addActive(suggestionItems);
+            if (currentFocus >= 0 && currentFocus < suggestionItems.length) {
+                suggestionItems[currentFocus].scrollIntoView({ block: 'nearest' });
+            }
         } else if (e.key === 'ArrowUp') {
             currentFocus--;
             addActive(suggestionItems);
+            if (currentFocus >= 0 && currentFocus < suggestionItems.length) {
+                suggestionItems[currentFocus].scrollIntoView({ block: 'nearest' });
+            }
         } else if (e.key === 'Enter') {
             e.preventDefault();
             if (currentFocus > -1) {
@@ -39,7 +50,37 @@ ipcRenderer.on('ingredient-names-response', (event, fileNames) => {
     });
 });
 
-function showSuggestions(suggestions) {
+ipcRenderer.on('recipe-names-response', (event, fileNames) => {
+    recipeNameInput.addEventListener('input', function () {
+        const input = this.value.toLowerCase();
+        const suggestions = fileNames.filter(name => name.toLowerCase().includes(input));
+        showSuggestions(suggestions, suggestionBoxRecipe, recipeNameInput);
+    });
+
+    recipeNameInput.addEventListener('keydown', function (e) {
+        const suggestionItems = suggestionBoxRecipe.getElementsByTagName('div');
+        if (e.key === 'ArrowDown') {
+            currentFocus++;
+            addActive(suggestionItems);
+            if (currentFocus >= 0 && currentFocus < suggestionItems.length) {
+                suggestionItems[currentFocus].scrollIntoView({ block: 'nearest' });
+            }
+        } else if (e.key === 'ArrowUp') {
+            currentFocus--;
+            addActive(suggestionItems);
+            if (currentFocus >= 0 && currentFocus < suggestionItems.length) {
+                suggestionItems[currentFocus].scrollIntoView({ block: 'nearest' });
+            }
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (currentFocus > -1) {
+                if (suggestionItems) suggestionItems[currentFocus].click();
+            }
+        }
+    });
+});
+
+function showSuggestions(suggestions, suggestionBox, inputElement) {
     suggestionBox.innerHTML = '';
     currentFocus = -1;
     suggestions.forEach(suggestion => {
@@ -48,10 +89,12 @@ function showSuggestions(suggestions) {
         div.style.padding = '8px';
         div.style.cursor = 'pointer';
         div.addEventListener('click', function () {
-            ingredientNameInput.value = suggestion;
+            inputElement.value = suggestion;
             suggestionBox.innerHTML = '';
-            // Request file content
-            ipcRenderer.send('read-ingredient-file', suggestion);
+            if (inputElement === ingredientNameInput) {
+                // Request file content
+                ipcRenderer.send('read-ingredient-file', suggestion);
+            }
         });
         div.addEventListener('mouseover', function () {
             removeActive(suggestionBox.getElementsByTagName('div'));
@@ -62,7 +105,7 @@ function showSuggestions(suggestions) {
         });
         suggestionBox.appendChild(div);
     });
-    const rect = ingredientNameInput.getBoundingClientRect();
+    const rect = inputElement.getBoundingClientRect();
     suggestionBox.style.left = `${rect.left}px`;
     suggestionBox.style.top = `${rect.bottom}px`;
     suggestionBox.style.width = `${rect.width}px`;

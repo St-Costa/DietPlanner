@@ -1,4 +1,4 @@
-#suggestionBox {
+#suggestionBox, #suggestionBox_recipe {
     max-height: 100px;
     overflow-y: auto;
     position: absolute;
@@ -9,11 +9,11 @@
     width: 100%; /* Set width to 100% to match the input field */
     box-sizing: border-box; /* Include padding and border in the element's total width and height */
 }
-#suggestionBox div {
+#suggestionBox div, #suggestionBox_recipe div {
     padding: 8px;
     cursor: pointer;
 }
-#suggestionBox div.autocomplete-active {
+#suggestionBox div.autocomplete-active, #suggestionBox_recipe div.autocomplete-active {
     background-color: #f0f0f0;
 }
 

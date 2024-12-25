@@ -1,0 +1,16 @@
+{
+  "name": "Chicken Breast",
+  "type": "Meat",
+  "kcal": "165",
+  "protein": "31",
+  "fiber": "0",
+  "fat": "3.6",
+  "saturated": "1",
+  "carb": "0",
+  "sugar": "0",
+  "salt": "0",
+  "chol": "85",
+  "cost": "1.1",
+  "unitWeight": "",
+  "unitName": ""
+}
