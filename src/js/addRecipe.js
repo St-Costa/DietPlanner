@@ -18,7 +18,7 @@ ipcRenderer.send('get-ingredient-names');
 ipcRenderer.on('ingredient-names-response', (event, fileNames) => {
     ingredientNameInput.addEventListener('input', function () {
         const input = this.value.toLowerCase();
-        const suggestions = fileNames.filter(name => name.toLowerCase().startsWith(input));
+        const suggestions = fileNames.filter(name => name.toLowerCase().includes(input));
         showSuggestions(suggestions);
     });
 

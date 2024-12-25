@@ -89,7 +89,7 @@ ipcRenderer.on('ingredient-names-response', (event, fileNames) => {
     // Implement autocompletion for ingredient names
     ingredientNameInput.addEventListener('input', function () {
         const input = this.value.toLowerCase();
-        const suggestions = fileNames.filter(name => name.toLowerCase().startsWith(input));
+        const suggestions = fileNames.filter(name => name.toLowerCase().includes(input));
         showSuggestions(suggestions, suggestionBox_name, ingredientNameInput);
     });
 
@@ -97,10 +97,10 @@ ipcRenderer.on('ingredient-names-response', (event, fileNames) => {
         const suggestionItems = suggestionBox_name.getElementsByTagName('div');
         if (e.key === 'ArrowDown') {
             currentFocus++;
-            addActive(suggestionItems);
+            addActive(suggestionItems, suggestionBox_name);
         } else if (e.key === 'ArrowUp') {
             currentFocus--;
-            addActive(suggestionItems);
+            addActive(suggestionItems, suggestionBox_name);
         } else if (e.key === 'Enter') {
             e.preventDefault();
             if (currentFocus > -1) {
@@ -114,7 +114,7 @@ ipcRenderer.on('ingredient-types-response', (event, types) => {
     // Implement autocompletion for ingredient types
     ingredientTypeInput.addEventListener('input', function () {
         const input = this.value.toLowerCase();
-        const suggestions = types.filter(type => type.toLowerCase().startsWith(input));
+        const suggestions = types.filter(type => type.toLowerCase().includes(input));
         showSuggestions(suggestions, suggestionBox_type, ingredientTypeInput);
     });
 
@@ -122,10 +122,10 @@ ipcRenderer.on('ingredient-types-response', (event, types) => {
         const suggestionItems = suggestionBox_type.getElementsByTagName('div');
         if (e.key === 'ArrowDown') {
             currentFocus++;
-            addActive(suggestionItems);
+            addActive(suggestionItems, suggestionBox_type);
         } else if (e.key === 'ArrowUp') {
             currentFocus--;
-            addActive(suggestionItems);
+            addActive(suggestionItems, suggestionBox_type);
         } else if (e.key === 'Enter') {
             e.preventDefault();
             if (currentFocus > -1) {
@@ -157,13 +157,13 @@ function showSuggestions(suggestions, suggestionBox, inputElement) {
     });
 }
 
-function addActive(items) {
+function addActive(items, suggestionBox) {
     if (!items) return false;
     removeActive(items);
     if (currentFocus >= items.length) currentFocus = 0;
     if (currentFocus < 0) currentFocus = items.length - 1;
     items[currentFocus].classList.add('autocomplete-active');
-    adjustScroll(items[currentFocus], suggestionBox_name);
+    adjustScroll(items[currentFocus], suggestionBox);
 }
 
 function removeActive(items) {
