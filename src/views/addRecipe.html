@@ -9,7 +9,6 @@
 </head>
 <body>
 
-
     <h1>Add Recipe</h1>
 
     <br>
@@ -31,6 +30,7 @@
                 <textarea id="preparation" rows="10" cols="50"></textarea>
             </td>
         </tr>
+        <!-- 
         <tr>
             <th class="right">Ingredient:</th>
             <td colspan="2">
@@ -38,6 +38,8 @@
                 <div id="suggestionBox"></div>
             </td>
         </tr>
+        -->
+        <!--
         <tr>
             <th class="right">Quantity:</th>
             <td class="numberInput" >
@@ -62,9 +64,72 @@
                 of <span id="unitName">(unit name)</span>
             </td>
         </tr>
+        -->
     </table>
 
-    
+    <table id="ingredientTable" class="table_border" style="border-collapse: collapse;">
+        <colgroup>
+            <col span="1">
+            <col style="border-left: 1px solid white; border-right: 1px solid white;">
+            <col style="border-right: 1px solid white;">
+            <col span="8">
+            <col style="border-left: 1px solid white;">
+        </colgroup>
+        <thead>
+            <tr>
+                <th id="nameHeader" class="ordered">Ingredient</th>
+                <th id="quantityHeader">Quantity</th>
+                <th id="typeHeader" class="ordered">Type</th>
+                <th id="kcalHeader" class="number ordered">Kcal<br></th>
+                <th id="proteinHeader" class="number ordered">Prot<br><span>(g)</span></th>
+                <th id="fiberHeader" class="number ordered">Fiber<br><span>(g)</span></th>
+                <th id="fatHeader" class="number ordered">Fat<br><span>(g)</span></th>
+                <th id="saturatedHeader" class="number ordered">Sat Fat<br><span>(g)</span></th>
+                <th id="carbHeader" class="number ordered">Carb<br><span>(g)</span></th>
+                <th id="sugarHeader" class="number ordered">Sugar<br><span>(g)</span></th>
+                <th id="saltHeader" class="number ordered">Salt<br><span>(g)</span></th>
+                <th id="cholHeader" class="number ordered">Chol<br><span>(mg)</span></th>
+                <th id="costHeader" class="number ordered">Cost<br><span>(€)</span></th>
+                <th class="thButton"></th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Dynamic rows will be added here -->
+        </tbody>
+        
+        <!-- Ingredient selection -->
+        <tr>
+            <td colspan="14" style="padding-top: 20px;"></td>
+        </tr>
+        <tr>
+            <td>Add ingredient:</td>
+            <td colspan="13"></td>
+        </tr>
+        <tr>
+            <td><input type="text" id="ingredientName"><div id="suggestionBox"></div></td>
+            <td>
+                <input type="number" id="quantityGrams" class="numberInput" step="0.1"> g
+                <div id="unitAlternative" style="display: inline;">
+                    ||
+                    <input class="numberInput" type="number" id="quantityUnit" placeholder="[0,∞]" min="0" step="0.01" oninput="validity.valid||(value='');"> 
+                    of 
+                    <span id="unitName">(unit name)</span>
+                </div>
+            </td>
+            <td class="center" id="typeSuggestedIngredient"></td>
+            <td class="center" id="kcalSuggestedIngredient"></td>
+            <td class="center" id="proteinSuggestedIngredient"></td>
+            <td class="center" id="fiberSuggestedIngredient"></td>
+            <td class="center" id="fatSuggestedIngredient"></td>
+            <td class="center" id="saturatedSuggestedIngredient"></td>
+            <td class="center" id="carbSuggestedIngredient"></td>
+            <td class="center" id="sugarSuggestedIngredient"></td>
+            <td class="center" id="saltSuggestedIngredient"></td>
+            <td class="center" id="cholSuggestedIngredient"></td>
+            <td class="center" id="costSuggestedIngredient"></td>
+            <td><button id="addIngredient">+</button></td>
+        </tr>
+    </table>
 
     <script>
         require('../js/addRecipe.js');

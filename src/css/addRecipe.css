@@ -22,8 +22,8 @@ table {
 }
 
 
-input {
-    width: 100%;
+#ingredientName{
+    width: 96%;
 }
 
 textarea {
@@ -32,14 +32,88 @@ textarea {
 }
 
 .numberInput {
-    width: 20%;
-    padding-right: 10px;
+    width: 40px;
 }
 .longInput {
     width: 80%;
 }
 
+/* Set the width of the table headers */
+#nameHeader {
+    width: 13%;
+}
+
+#quantityHeader {
+    width: 20%;
+}
+
+#typeHeader {
+    width: 10%;
+}
+
+.number {
+    width: 3%;
+    white-space: nowrap;
+    text-align: center;
+}
+
+/* END */
 
 #unitWeight, #unitName {
     display: inline-block;
+}
+
+.table_border th {
+    background-color: #ff5e00;
+    text-align: center;
+
+    /* Make the table header non-selectable */
+    user-select: none;
+    -webkit-user-select: none; /* For Safari */
+    -moz-user-select: none; /* For Firefox */
+    -ms-user-select: none; /* For Internet Explorer/Edge */
+}
+
+th.ordered:hover {
+    cursor: pointer;
+}
+
+
+
+/* Remove top and bottom borders for table rows */
+.table tr {
+    border-top: none;
+    border-bottom: none;
+}
+
+/* Remove the first and last vertical lines */
+.table th:first-child, .table td:first-child {
+    border-left: none;
+}
+
+.table th:last-child, .table td:last-child {
+    border-right: none;
+}
+
+
+/* Remove arrows from number input */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+    appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+
+.thButton {
+    width: 1%;
+}
+
+button {
+    font-size: 20px; 
+    padding: 1px 5px !important;  /* Spazio interno (10px sopra e sotto, 20px ai lati) */
+    margin: 1px;  
 }
