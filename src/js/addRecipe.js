@@ -6,6 +6,8 @@ const unitWeightDiv = document.getElementById('unitWeight');
 const unitNameSpan = document.getElementById('unitName');
 const quantityGramsInput = document.getElementById('quantityGrams');
 const quantityUnitInput = document.getElementById('quantityUnit');
+const fractionRow = document.getElementById('fractionRow');
+const unitNameRow = document.getElementById('unitNameRow');
 
 let currentFocus = -1;
 let unitWeight = 0;
@@ -72,9 +74,13 @@ ipcRenderer.on('read-ingredient-file-response', (event, data) => {
             unitWeight = parseFloat(data.unitWeight);
             unitWeightDiv.textContent = `${unitWeight} g`;
             unitWeightDiv.style.color = '#ff5e00';
+            fractionRow.style.display = '';
+            unitNameRow.style.display = '';
         } else {
             unitWeight = 0;
             unitWeightDiv.textContent = '(unit weight)';
+            fractionRow.style.display = 'none';
+            unitNameRow.style.display = 'none';
         }
         if (data.unitName) {
             unitNameSpan.textContent = data.unitName;
