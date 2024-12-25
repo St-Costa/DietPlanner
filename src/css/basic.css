@@ -84,6 +84,9 @@ button {
 .center{
     text-align: center;
 }
+.top {
+    vertical-align: top;
+}
 
 table {
   width:70%;
