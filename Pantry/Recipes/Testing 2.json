@@ -1,0 +1,15 @@
+{
+  "ingredientsArray": [
+    "Chicken thighs",
+    "Egg",
+    "Spaghetti",
+    "Kefir"
+  ],
+  "quantitiesArray": [
+    100,
+    50,
+    500,
+    500
+  ],
+  "preparation": "Preparation 2"
+}

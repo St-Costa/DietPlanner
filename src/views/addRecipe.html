@@ -12,7 +12,9 @@
     <h1>Add Recipe</h1>
 
     <br>
-    
+    <div id="messageBox" class="center"></div>
+    <br>
+
     <table>
         <tr>
             <th class="right">Recipe:</th>
@@ -93,7 +95,7 @@
                 <th class="thButton"></th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="dynamicTable">
             <!-- Dynamic rows will be added here -->
         </tbody>
         
@@ -127,7 +129,7 @@
             <td class="center" id="saltSuggestedIngredient"></td>
             <td class="center" id="cholSuggestedIngredient"></td>
             <td class="center" id="costSuggestedIngredient"></td>
-            <td><button id="addIngredient">+</button></td>
+            <td><button id="addIngredientButton">+</button></td>
         </tr>
     </table>
 

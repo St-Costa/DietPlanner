@@ -80,10 +80,14 @@ allInputs.forEach(input => {
 });
 
 // Request ingredient names for autocompletion
-ipcRenderer.send('get-ingredient-names');
+ingredientNameInput.addEventListener('focus', function () {
+    ipcRenderer.send('get-ingredient-names');
+});
 
 // Request ingredient types for autocompletion
-ipcRenderer.send('get-ingredient-types');
+ingredientTypeInput.addEventListener('focus', function () {
+    ipcRenderer.send('get-ingredient-types');
+});
 
 ipcRenderer.on('ingredient-names-response', (event, fileNames) => {
     // Implement autocompletion for ingredient names
@@ -267,8 +271,7 @@ ipcRenderer.on('create-file-response', (event, status) => {
         div_resultOfCall.style.color = '#ff0000';
     }
 
-    addIngredientBtn.disabled = true;
-    setTimeout(() => {window.close();}, 1500);
+    setTimeout(() => {div_resultOfCall.innerHTML = '';}, 1500);
 });
 
 ipcRenderer.on('update-file-response', (event, status) => {

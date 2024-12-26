@@ -159,6 +159,7 @@ ipcMain.on('read-ingredient-file', (event, ingredientName) => {
             console.error('Failed to read file:', err);
             event.reply('read-ingredient-file-response', null);
         } else {
+            console.log('File read successfully:', ingredientName);
             event.reply('read-ingredient-file-response', JSON.parse(data));
         }
     });
@@ -242,5 +243,48 @@ ipcMain.on('get-ingredient-list', (event) => {
             });
             event.reply('ingredient-list-response', ingredients);
         }
+    });
+});
+
+// IPC listener to create or update recipe file
+ipcMain.on('add-ingredient-to-recipe', (event, recipeAndIngredients) => {
+    const { recipeName, preparationText, ingredientName, quantity } = recipeAndIngredients;
+    const filePath = path.join(__dirname, '../../Pantry/Recipes', `${recipeName}.json`);
+    fs.readFile(filePath, 'utf8', (err, data) => {
+        let recipeData;
+
+        if (err) {
+            if (err.code === 'ENOENT') {
+                // File does not exist, create a new one
+                recipeData = {
+                    ingredientsArray: [],
+                    quantitiesArray: [],
+                    preparation: "",
+                };
+            } else {
+                console.error('Failed to read file:', err);
+                event.reply('add-ingredient-to-recipe-response', 'failure');
+                return;
+            }
+        } else {
+            // File exists, parse the existing data
+            recipeData = JSON.parse(data);
+        }
+
+        // Add the ingredient and quantity to the arrays
+        recipeData.ingredientsArray.push(ingredientName);
+        recipeData.quantitiesArray.push(quantity);
+        recipeData.preparation = preparationText;
+
+        // Write the updated data back to the file
+        fs.writeFile(filePath, JSON.stringify(recipeData, null, 2), (err) => {
+            if (err) {
+                console.error('Failed to write file:', err);
+                event.reply('add-ingredient-to-recipe-response', 'failure');
+            } else {
+                console.log('File updated successfully');
+                event.reply('add-ingredient-to-recipe-response', 'success');
+            }
+        });
     });
 });
