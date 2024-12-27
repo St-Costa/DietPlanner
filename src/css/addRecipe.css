@@ -117,3 +117,7 @@ button {
     padding: 1px 5px !important;  /* Spazio interno (10px sopra e sotto, 20px ai lati) */
     margin: 1px;  
 }
+
+.deleteButton {
+    padding: 1px 7px !important;
+}

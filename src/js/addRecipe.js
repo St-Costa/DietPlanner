@@ -248,8 +248,14 @@ ipcRenderer.on('read-recipe-file-response', async (event, data) => {
                 <td class="center">${(ingredientSalt*quantity / 100).toFixed(2)}</td>
                 <td class="center">${(ingredientChol*quantity / 100).toFixed(0)}</td>
                 <td class="center">${costString}</td>
+                <td class="center"><button id="deleteButton" class="deleteButton">-</button></td>
             `;
             dynamicTable.appendChild(newRow);
+
+            // Add event listener to the delete button
+            newRow.querySelector('#deleteButton').addEventListener('click', function() {
+                newRow.remove();
+            });
         }
     }
 });
