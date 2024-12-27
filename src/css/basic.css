@@ -91,3 +91,21 @@ button {
 table {
   width:90%;
 }
+
+.explainingBox {
+    color: #fff08c;
+    border: 1px solid #fff08c;
+    padding: 10px;
+    margin: 10px;
+    border-radius: 5px;
+    width: 60%;
+    margin:auto;
+}
+
+.messageBox {
+  padding: 10px;
+  margin: 10px;
+  border-radius: 5px;
+  width: 60%;
+  margin: auto;
+}

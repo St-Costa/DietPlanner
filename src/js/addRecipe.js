@@ -92,7 +92,6 @@ function showSuggestions(suggestions, suggestionBox, inputElement) {
                         if (data.unitName) {
                             unitNameSpan.textContent = data.unitName;
                             unitAlternativeSpan.style.display = 'inline';
-                            unitNameSpan.style.color = '#ff5e00';
                             unitWeight = data.unitWeight;
                         } else {
                             unitAlternativeSpan.style.display = 'none';
@@ -184,8 +183,7 @@ preparationBox.addEventListener('keydown', function (e) {
         e.preventDefault();
         const recipeName = recipeNameInput.value.trim();
         if (recipeName === '') {
-            messageBoxDiv.textContent = 'Recipe name cannot be empty!';
-            messageBoxDiv.style.color = 'red';
+            messageBoxUpdate('Recipe name cannot be empty!', false);
             return;
         }
         const preparationText = preparationBox.value.trim();
@@ -193,11 +191,10 @@ preparationBox.addEventListener('keydown', function (e) {
         ipcRenderer.send('update-recipe-preparation', { recipeName, preparationText });
         ipcRenderer.once('update-recipe-preparation-response', (response, message) => {
             if (message === 'success') {
-                console.log('Preparation updated!');
+                messageBoxUpdate('Preparation updated!', true);
             } 
             else {
-                messageBoxDiv.textContent = 'Failed to update preparation!';
-                messageBoxDiv.style.color = 'red';
+                messageBoxUpdate('Failed to update preparation!', false);
             }
         });
         preparationTextBeforeModification = preparationBox.value;
@@ -268,6 +265,14 @@ ipcRenderer.on('read-recipe-file-response', async (event, data) => {
             newRow.querySelector('.removeIngredient').addEventListener('click', function() {
                 newRow.remove();
                 readIngredientsFromTableAndUpdateRecipe();
+            });
+
+            // Add event listener to change ingredient name color on button hover
+            newRow.querySelector('.removeIngredient').addEventListener('mouseover', function() {
+                newRow.querySelector('td').style.color = '#ff5e00';
+            });
+            newRow.querySelector('.removeIngredient').addEventListener('mouseout', function() {
+                newRow.querySelector('td').style.color = '';
             });
 
             // Add event listener to the gram input field
@@ -395,11 +400,10 @@ async function readIngredientsFromTableAndUpdateRecipe() {
     await new Promise((resolve) => {
         ipcRenderer.once('update-recipe-ingredients-response', (response, message) => {
             if (message === 'success') {
-                console.log('Recipe updated!');
+                messageBoxUpdate('Recipe updated!', true);
             } 
             else if (message === 'failure') {
-                messageBoxDiv.textContent = 'Failed to update recipe!';
-                messageBoxDiv.style.color = 'red';
+                messageBoxUpdate('Failed to update recipe!', false);
             }
             resolve('resolved');
         });
@@ -478,14 +482,12 @@ document.getElementById('addIngredientButton').addEventListener('click', async f
     
     // Empty recipe name
     if (recipeName === '') {
-        messageBoxDiv.textContent = 'Recipe name cannot be empty!';
-        messageBoxDiv.style.color = 'red';
+        messageBoxUpdate('Recipe name cannot be empty!', false);
         return;
     }
     // Empty ingredient name or invalid quantity
     else if (ingredientName === '' || isNaN(quantity) || quantity <= 0) {
-        messageBoxDiv.textContent = 'Ingredient name and quantity cannot be empty!';
-        messageBoxDiv.style.color = 'red';
+        messageBoxUpdate('Ingredient name and quantity cannot be empty!', false);
         return;
     }
 
@@ -499,16 +501,14 @@ document.getElementById('addIngredientButton').addEventListener('click', async f
     await new Promise((resolve) => {
         ipcRenderer.once('add-ingredient-to-recipe-response', (response, message) => {
             if (message === 'success') {
-                console.log('Ingredient added to recipe.');
                 ingredientAdded = true;
+                messageBoxUpdate('Ingredient added to recipe!', true);
             } 
             if (message === 'Ingredient already exists') {
-                messageBoxDiv.textContent = 'Ingredient is already present in the recipe!';
-                messageBoxDiv.style.color = 'red';
+                messageBoxUpdate('Ingredient is already present in the recipe!', false);
             }
             else if (message === 'failure') {
-                messageBoxDiv.textContent = 'Failed to add ingredient to recipe!';
-                messageBoxDiv.style.color = 'red';
+                messageBoxUpdate('Failed to add ingredient to recipe!', false);
             }
             resolve('resolved');
         });
@@ -537,3 +537,25 @@ document.getElementById('addIngredientButton').addEventListener('click', async f
     }
 });
 
+
+function messageBoxUpdate(messageText, messageBool){
+    let boxColor = ""
+    
+    if(messageBool){
+        boxColor = "#8cff69";
+    }
+    else if (!messageBool){
+        boxColor = "#ff2b2b";
+    }
+
+    messageBoxDiv.style.color = boxColor;
+    messageBoxDiv.textContent = messageText;
+    messageBoxDiv.style.border = '1px solid ' + boxColor;
+    messageBoxDiv.style.fontWeight = 'bold';
+    
+    setTimeout(function(){
+        messageBoxDiv.textContent = '';
+        messageBoxDiv.style.color = "";
+        messageBoxDiv.style.border = '1px none';
+    }, 3000);
+}
