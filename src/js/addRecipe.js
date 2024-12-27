@@ -200,11 +200,11 @@ ipcRenderer.on('read-recipe-file-response', async (event, data) => {
             newRow.innerHTML = `
                 <td>${ingredientName}</td>
                 <td>
-                    <input type="number" value="${quantityGrams}" class="numberInput" step="0.1"> g
+                    <input type="number" id="gramsInput" value="${quantityGrams}" class="numberInput" step="0.1"> g
                     ${ingredientData.unitWeight ? `
                     <div style="display: inline;">
                         ||
-                        <input class="numberInput" type="number" value="${(quantityGrams / ingredientData.unitWeight).toFixed(2)}" placeholder="[0,∞]" min="0" step="0.01" oninput="validity.valid||(value='');"> 
+                        <input class="numberInput" id="unitInput" type="number" value="${(quantityGrams / ingredientData.unitWeight).toFixed(2)}" placeholder="[0,∞]" min="0" step="0.01" oninput="validity.valid||(value='');"> 
                         of 
                         <span>${ingredientData.unitName}</span>
                     </div>` : ''}
@@ -219,16 +219,116 @@ ipcRenderer.on('read-recipe-file-response', async (event, data) => {
                 <td class="center">${(ingredientData.sugar * quantityGrams / 100).toFixed(2)}</td>
                 <td class="center">${(ingredientData.salt * quantityGrams / 100).toFixed(2)}</td>
                 <td class="center">${(ingredientData.chol * quantityGrams / 100).toFixed(2)}</td>
-                <td class="center">${(ingredientData.cost * quantityGrams / 100).toFixed(2)}</td>
-                <td><button class="removeIngredient">-</button></td>
+                <td class="center">${ingredientData.unitWeight ? (ingredientData.cost * (quantityGrams / ingredientData.unitWeight)).toFixed(2) : (ingredientData.cost * quantityGrams / 100).toFixed(2)}</td>
+                <td><button class="removeIngredient">x</button></td>
             `;
             dynamicTable.appendChild(newRow);
+
+            // Add a local variable to remember the value of the quantity before the modification
+            let gramsBeforeModification = quantityGrams;
 
             // Add event listener to the remove button
             newRow.querySelector('.removeIngredient').addEventListener('click', function() {
                 newRow.remove();
-                readIngredientsFromTable();
+                readIngredientsFromTableAndUpdateRecipe();
             });
+
+            // Add event listener to the gram input field
+            newRow.querySelector('#gramsInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    const grams = parseFloat(this.value);
+                    if (!isNaN(grams)) {
+                        const units = grams / ingredientData.unitWeight;
+                        const unitInput = newRow.querySelector('#unitInput');
+                        if (unitInput) {
+                            unitInput.value = units.toFixed(2);
+                        }
+                    }
+                    readIngredientsFromTableAndUpdateRecipe();
+
+                    // Update the originalGrams variable with the new value
+                    gramsBeforeModification = grams;
+                }
+            });
+
+            // Add event listener to the unit input field
+            const unitInput = newRow.querySelector('#unitInput');
+            if (unitInput) {
+                unitInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        const units = parseFloat(this.value);
+                        if (!isNaN(units)) {
+                            const grams = units * ingredientData.unitWeight;
+                            newRow.querySelector('#gramsInput').value = grams.toFixed(2);
+                        }
+                        readIngredientsFromTableAndUpdateRecipe();
+
+                        // Update the originalGrams variable with the new value
+                        gramsBeforeModification = parseFloat(newRow.querySelector('#gramsInput').value);
+                    }
+                });
+            }
+
+            // Function to update ingredient details only in the row (not in recipe)
+            function updateRowDetails(row, ingredientData, quantityGrams) {
+                const cells = row.getElementsByTagName('td');
+                cells[3].textContent = (ingredientData.kcal * quantityGrams / 100).toFixed(2);
+                cells[4].textContent = (ingredientData.protein * quantityGrams / 100).toFixed(2);
+                cells[5].textContent = (ingredientData.fiber * quantityGrams / 100).toFixed(2);
+                cells[6].textContent = (ingredientData.fat * quantityGrams / 100).toFixed(2);
+                cells[7].textContent = (ingredientData.saturated * quantityGrams / 100).toFixed(2);
+                cells[8].textContent = (ingredientData.carb * quantityGrams / 100).toFixed(2);
+                cells[9].textContent = (ingredientData.sugar * quantityGrams / 100).toFixed(2);
+                cells[10].textContent = (ingredientData.salt * quantityGrams / 100).toFixed(2);
+                cells[11].textContent = (ingredientData.chol * quantityGrams / 100).toFixed(2);
+                cells[12].textContent = ingredientData.unitWeight ? (ingredientData.cost * (quantityGrams / ingredientData.unitWeight)).toFixed(2) : (ingredientData.cost * quantityGrams / 100).toFixed(2);
+            }
+
+            
+            // Change temporary values when the user types in the input fields
+            newRow.querySelector('#gramsInput').addEventListener('input', function() {
+                const grams = parseFloat(this.value);
+                if (!isNaN(grams)) {
+                    const units = grams / ingredientData.unitWeight;
+                    const unitInput = newRow.querySelector('#unitInput');
+                    if (unitInput) {
+                        unitInput.value = units.toFixed(2);
+                    }
+                    updateRowDetails(newRow, ingredientData, grams);
+                }
+            });
+            const unitInputField = newRow.querySelector('#unitInput');
+            if (unitInputField) {
+                unitInputField.addEventListener('input', function() {
+                    const units = parseFloat(this.value);
+                    if (!isNaN(units)) {
+                        const grams = units * ingredientData.unitWeight;
+                        newRow.querySelector('#gramsInput').value = grams.toFixed(0);
+                        updateRowDetails(newRow, ingredientData, grams);
+                    }
+                });
+            }
+
+            // When modify grams without updating the recipe, revert to the original value
+            newRow.querySelector('#gramsInput').addEventListener('blur', function() {
+                this.value = gramsBeforeModification.toFixed(0);
+                const unitInput = newRow.querySelector('#unitInput');
+                if (unitInput) {
+                    unitInput.value = (gramsBeforeModification / ingredientData.unitWeight).toFixed(2);
+                }
+                updateRowDetails(newRow, ingredientData, gramsBeforeModification);                
+            });
+            // When modify units without updating the recipe, revert to the original value
+            if (unitInputField) {
+                unitInputField.addEventListener('blur', function() {
+                    this.value = (gramsBeforeModification / ingredientData.unitWeight).toFixed(2);
+                    newRow.querySelector('#gramsInput').value = gramsBeforeModification.toFixed(0);
+                    updateRowDetails(newRow, ingredientData, gramsBeforeModification);
+                });
+            }
+
+
+
         }
     } else {
         // Show the suggestion box if the recipe does not exist
@@ -238,7 +338,7 @@ ipcRenderer.on('read-recipe-file-response', async (event, data) => {
 });
 
 // Read table, update the recipe file, update the shown table
-async function readIngredientsFromTable() {
+async function readIngredientsFromTableAndUpdateRecipe() {
     const rows = dynamicTable.getElementsByTagName('tr');
     const ingredientsArray = [];
     const quantitiesArray = [];
