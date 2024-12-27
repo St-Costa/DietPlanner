@@ -176,12 +176,49 @@ recipeNameInput.addEventListener('keydown', function (e) {
     }
 });
 
+// Save temp preparation text
+let preparationTextBeforeModification = "";
+
+preparationBox.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const recipeName = recipeNameInput.value.trim();
+        if (recipeName === '') {
+            messageBoxDiv.textContent = 'Recipe name cannot be empty!';
+            messageBoxDiv.style.color = 'red';
+            return;
+        }
+        const preparationText = preparationBox.value.trim();
+        
+        ipcRenderer.send('update-recipe-preparation', { recipeName, preparationText });
+        ipcRenderer.once('update-recipe-preparation-response', (response, message) => {
+            if (message === 'success') {
+                console.log('Preparation updated!');
+            } 
+            else {
+                messageBoxDiv.textContent = 'Failed to update preparation!';
+                messageBoxDiv.style.color = 'red';
+            }
+        });
+        preparationTextBeforeModification = preparationBox.value;
+    }
+});
+
+preparationBox.addEventListener('blur', function () {
+    preparationBox.value = preparationTextBeforeModification;
+});
+
+
 ipcRenderer.on('read-recipe-file-response', async (event, data) => {
     if (data) {
         // Hide the suggestion box if the recipe exists
         suggestionBoxRecipe.innerHTML = '';
 
         preparationBox.value = data.preparation || '';
+
+        //Update preparation default text for local modifications
+        preparationTextBeforeModification = data.preparation || '';
+
         const ingredientsArray = data.ingredientsArray || [];
         const quantitiesArray = data.quantitiesArray || [];
 
