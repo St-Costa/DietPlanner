@@ -236,9 +236,7 @@ ipcRenderer.on('read-recipe-file-response', async (event, data) => {
                 <td>${ingredientName}</td>
                 <td>
                     <input type="number" value="${quantity}" class="numberInput" step="0.1"> g
-                ` 
-                + quantityUnitString
-                + `
+                ${quantityUnitString}
                 <td class="center">${ingredientType}</td>
                 <td class="center">${(ingredientKcal*quantity / 100).toFixed(0)}</td>
                 <td class="center">${(ingredientProtein*quantity / 100).toFixed(1)}</td>
@@ -324,22 +322,32 @@ document.getElementById('addIngredientButton').addEventListener('click', async f
     const recipeName = recipeNameInput.value.trim();
     const preparationText = preparationBox.value.trim();
     
+    // Empty recipe name
     if (recipeName === '') {
         messageBoxDiv.textContent = 'Recipe name cannot be empty!';
         messageBoxDiv.style.color = 'red';
         return;
     }
+    // Empty ingredient name or invalid quantity
     else if (ingredientName === '' || isNaN(quantity) || quantity <= 0) {
         messageBoxDiv.textContent = 'Ingredient name and quantity cannot be empty!';
         messageBoxDiv.style.color = 'red';
         return;
     }
-    else if (preparationText === '') {
-        messageBoxDiv.textContent = 'Preparation text cannot be empty!';
-        messageBoxDiv.style.color = 'red';
-        return;
-    }
+    // Ingredient is already in the recipe
+    ipcRenderer.send('read-recipe-file', recipeName);
+    await new Promise((resolve) => {
+        ipcRenderer.once('read-recipe-file-response', (event, data) => {
+            if (data && data.ingredientsArray.includes(ingredientName)) {
+                messageBoxDiv.textContent = 'Ingredient is already present in the recipe!';
+                messageBoxDiv.style.color = 'red';
+                return;
+            }
+            resolve();
+        });
+    });
 
+    // Add the ingredient to the recipe
     ipcRenderer.send('add-ingredient-to-recipe', { recipeName, preparationText, ingredientName, quantity });
     
 
@@ -376,3 +384,4 @@ document.getElementById('addIngredientButton').addEventListener('click', async f
 
     ipcRenderer.send('read-recipe-file', recipeName);
 });
+
