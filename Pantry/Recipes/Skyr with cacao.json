@@ -3,13 +3,15 @@
     "Kefir",
     "Beef hamburger",
     "Egg",
-    "Egg white"
+    "Egg white",
+    "Hotdog"
   ],
   "quantitiesArray": [
     500,
     200,
     75,
-    600
+    600,
+    250
   ],
   "preparation": ""
 }

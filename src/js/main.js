@@ -294,3 +294,30 @@ ipcMain.on('add-ingredient-to-recipe', (event, recipeAndIngredients) => {
         });
     });
 });
+
+ipcMain.on('update-recipe-ingredients', (event, recipeAndIngredients) => {
+    const { recipeName, ingredientsArray, quantitiesArray } = recipeAndIngredients;
+    const filePath = path.join(__dirname, '../../Pantry/Recipes', `${recipeName}.json`);
+    
+    fs.readFile(filePath, 'utf8', (err, data) => {
+        if (err) {
+            console.error('Failed to read file:', err);
+            event.reply('update-recipe-ingredients-response', 'failure');
+            return;
+        }
+
+        let recipeData = JSON.parse(data);
+        recipeData.ingredientsArray = ingredientsArray;
+        recipeData.quantitiesArray = quantitiesArray;
+
+        fs.writeFile(filePath, JSON.stringify(recipeData, null, 2), (err) => {
+            if (err) {
+                console.error('Failed to write file:', err);
+                event.reply('update-recipe-ingredients-response', 'failure');
+            } else {
+                console.log('File updated successfully');
+                event.reply('update-recipe-ingredients-response', 'success');
+            }
+        });
+    });
+});

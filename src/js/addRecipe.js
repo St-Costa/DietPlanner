@@ -29,6 +29,7 @@ let currentFocus = -1;
 let unitWeight = 0;
 let ingredientData = {};
 
+
 // Request ingredient names for autocompletion
 ingredientNameInput.addEventListener('focus', function () {
     ipcRenderer.send('get-ingredient-names');
@@ -226,6 +227,7 @@ ipcRenderer.on('read-recipe-file-response', async (event, data) => {
             // Add event listener to the remove button
             newRow.querySelector('.removeIngredient').addEventListener('click', function() {
                 newRow.remove();
+                readIngredientsFromTable();
             });
         }
     } else {
@@ -234,6 +236,41 @@ ipcRenderer.on('read-recipe-file-response', async (event, data) => {
         dynamicTable.innerHTML = '';
     }
 });
+
+// Read table, update the recipe file, update the shown table
+async function readIngredientsFromTable() {
+    const rows = dynamicTable.getElementsByTagName('tr');
+    const ingredientsArray = [];
+    const quantitiesArray = [];
+
+    for (let i = 0; i < rows.length; i++) {
+        const cells = rows[i].getElementsByTagName('td');
+        const ingredientName = cells[0].textContent;
+        const quantityGrams = parseFloat(cells[1].getElementsByTagName('input')[0].value);
+
+        ingredientsArray.push(ingredientName);
+        quantitiesArray.push(quantityGrams);
+    }
+
+    const recipeName = recipeNameInput.value.trim();
+    ipcRenderer.send('update-recipe-ingredients', { recipeName, ingredientsArray, quantitiesArray });
+
+    await new Promise((resolve) => {
+        ipcRenderer.once('update-recipe-ingredients-response', (response, message) => {
+            if (message === 'success') {
+                console.log('Recipe updated!');
+            } 
+            else if (message === 'failure') {
+                messageBoxDiv.textContent = 'Failed to update recipe!';
+                messageBoxDiv.style.color = 'red';
+            }
+            resolve('resolved');
+        });
+    });
+
+    ipcRenderer.send('read-recipe-file', recipeName);
+}
+
 
 function getIngredientData(ingredientName) {
     return new Promise((resolve, reject) => {
