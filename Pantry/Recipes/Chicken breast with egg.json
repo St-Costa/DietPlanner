@@ -1,11 +1,15 @@
 {
   "ingredientsArray": [
     "Egg",
-    "Chicken Breast"
+    "Chicken Breast",
+    "Beef hamburger",
+    "Chicken thighs"
   ],
   "quantitiesArray": [
     100,
-    100
+    100,
+    200,
+    111
   ],
   "preparation": ""
 }

@@ -1,0 +1,23 @@
+{
+  "ingredientsArray": [
+    "Beef hamburger",
+    "Egg",
+    "Kefir",
+    "Spaghetti",
+    "Chicken Breast",
+    "Chicken thighs",
+    "Egg white",
+    "Hotdog"
+  ],
+  "quantitiesArray": [
+    300,
+    100,
+    500,
+    100,
+    111,
+    111,
+    500,
+    250
+  ],
+  "preparation": ""
+}

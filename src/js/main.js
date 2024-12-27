@@ -78,7 +78,7 @@ ipcMain.on('open-add-ingredient-window', (event, arg) => {
 // IPC listener to open a new window
 ipcMain.on('open-add-recipe-window', (event, arg) => {
     let addIngredientView = new BrowserWindow({
-        width: 500,
+        width: 1500,
         height: 760,
         webPreferences: {
             nodeIntegration: true,
@@ -269,6 +269,12 @@ ipcMain.on('add-ingredient-to-recipe', (event, recipeAndIngredients) => {
         } else {
             // File exists, parse the existing data
             recipeData = JSON.parse(data);
+        }
+
+        // Check if the ingredient is already in the recipe
+        if (recipeData.ingredientsArray.includes(ingredientName)) {
+            event.reply('add-ingredient-to-recipe-response', 'Ingredient already exists');
+            return;
         }
 
         // Add the ingredient and quantity to the arrays

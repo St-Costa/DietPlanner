@@ -1,9 +1,15 @@
 {
   "ingredientsArray": [
-    "Kefir"
+    "Kefir",
+    "Beef hamburger",
+    "Egg",
+    "Egg white"
   ],
   "quantitiesArray": [
-    500
+    500,
+    200,
+    75,
+    600
   ],
   "preparation": ""
 }

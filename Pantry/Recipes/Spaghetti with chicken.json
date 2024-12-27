@@ -1,11 +1,21 @@
 {
   "ingredientsArray": [
     "Spaghetti",
-    "Chicken thighs"
+    "Chicken thighs",
+    "Chicken Breast",
+    "Kefir",
+    "Beef hamburger",
+    "Egg",
+    "Egg white"
   ],
   "quantitiesArray": [
     250,
-    100
+    100,
+    111,
+    500,
+    200,
+    50,
+    500
   ],
   "preparation": ""
 }

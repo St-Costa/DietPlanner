@@ -197,15 +197,16 @@ ipcRenderer.on('read-recipe-file-response', async (event, data) => {
             // Create a new row for the ingredient
             const newRow = document.createElement('tr');
             newRow.innerHTML = `
-                <td><input type="text" value="${ingredientName}" readonly></td>
+                <td>${ingredientName}</td>
                 <td>
                     <input type="number" value="${quantityGrams}" class="numberInput" step="0.1"> g
+                    ${ingredientData.unitWeight ? `
                     <div style="display: inline;">
                         ||
                         <input class="numberInput" type="number" value="${(quantityGrams / ingredientData.unitWeight).toFixed(2)}" placeholder="[0,∞]" min="0" step="0.01" oninput="validity.valid||(value='');"> 
                         of 
                         <span>${ingredientData.unitName}</span>
-                    </div>
+                    </div>` : ''}
                 </td>
                 <td class="center">${ingredientData.type}</td>
                 <td class="center">${(ingredientData.kcal * quantityGrams / 100).toFixed(2)}</td>
@@ -313,28 +314,24 @@ document.getElementById('addIngredientButton').addEventListener('click', async f
         messageBoxDiv.style.color = 'red';
         return;
     }
-    // Ingredient is already in the recipe
-    ipcRenderer.send('read-recipe-file', recipeName);
-    await new Promise((resolve) => {
-        ipcRenderer.once('read-recipe-file-response', (event, data) => {
-            if (data && data.ingredientsArray.includes(ingredientName)) {
-                messageBoxDiv.textContent = 'Ingredient is already present in the recipe!';
-                messageBoxDiv.style.color = 'red';
-                return;
-            }
-            resolve();
-        });
-    });
 
     // Add the ingredient to the recipe
+    // This will check if the ingredient is already in the recipe
     ipcRenderer.send('add-ingredient-to-recipe', { recipeName, preparationText, ingredientName, quantity });
     
+
+    let ingredientAdded = false;
 
     await new Promise((resolve) => {
         ipcRenderer.once('add-ingredient-to-recipe-response', (response, message) => {
             if (message === 'success') {
                 console.log('Ingredient added to recipe.');
+                ingredientAdded = true;
             } 
+            if (message === 'Ingredient already exists') {
+                messageBoxDiv.textContent = 'Ingredient is already present in the recipe!';
+                messageBoxDiv.style.color = 'red';
+            }
             else if (message === 'failure') {
                 messageBoxDiv.textContent = 'Failed to add ingredient to recipe!';
                 messageBoxDiv.style.color = 'red';
@@ -344,23 +341,25 @@ document.getElementById('addIngredientButton').addEventListener('click', async f
     });
 
 
-    ingredientNameInput.value = '';
-    quantityGramsInput.value = '';
-    quantityUnitInput.value = '';
-    unitNameSpan.textContent = '';
-    unitAlternativeSpan.style.display = 'none';
-    ingredientDetails.type.textContent = '';
-    ingredientDetails.kcal.textContent = '';
-    ingredientDetails.protein.textContent = '';
-    ingredientDetails.fiber.textContent = '';
-    ingredientDetails.fat.textContent = '';
-    ingredientDetails.saturated.textContent = '';
-    ingredientDetails.carb.textContent = '';
-    ingredientDetails.sugar.textContent = '';
-    ingredientDetails.salt.textContent = '';
-    ingredientDetails.chol.textContent = '';
-    ingredientDetails.cost.textContent = '';
+    if (ingredientAdded) {
+        ingredientNameInput.value = '';
+        quantityGramsInput.value = '';
+        quantityUnitInput.value = '';
+        unitNameSpan.textContent = '';
+        unitAlternativeSpan.style.display = 'none';
+        ingredientDetails.type.textContent = '';
+        ingredientDetails.kcal.textContent = '';
+        ingredientDetails.protein.textContent = '';
+        ingredientDetails.fiber.textContent = '';
+        ingredientDetails.fat.textContent = '';
+        ingredientDetails.saturated.textContent = '';
+        ingredientDetails.carb.textContent = '';
+        ingredientDetails.sugar.textContent = '';
+        ingredientDetails.salt.textContent = '';
+        ingredientDetails.chol.textContent = '';
+        ingredientDetails.cost.textContent = '';
 
-    ipcRenderer.send('read-recipe-file', recipeName);
+        ipcRenderer.send('read-recipe-file', recipeName);
+    }
 });
 
