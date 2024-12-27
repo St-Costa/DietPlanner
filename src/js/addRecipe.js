@@ -39,33 +39,21 @@ recipeNameInput.addEventListener('focus', function () {
     ipcRenderer.send('get-recipe-names');
 });
 
+recipeNameInput.addEventListener('input', function () {
+    const recipeName = recipeNameInput.value.trim();
+    if (recipeName) {
+        ipcRenderer.send('read-recipe-file', recipeName);
+    } else {
+        // Empty the dynamic table if the recipe name is empty
+        dynamicTable.innerHTML = '';
+    }
+});
+
 ipcRenderer.on('ingredient-names-response', (event, fileNames) => {
     ingredientNameInput.addEventListener('input', function () {
         const input = this.value.toLowerCase();
         const suggestions = fileNames.filter(name => name.toLowerCase().includes(input));
         showSuggestions(suggestions, suggestionBox, ingredientNameInput);
-    });
-
-    ingredientNameInput.addEventListener('keydown', function (e) {
-        const suggestionItems = suggestionBox.getElementsByTagName('div');
-        if (e.key === 'ArrowDown') {
-            currentFocus++;
-            addActive(suggestionItems);
-            if (currentFocus >= 0 && currentFocus < suggestionItems.length) {
-                suggestionItems[currentFocus].scrollIntoView({ block: 'nearest' });
-            }
-        } else if (e.key === 'ArrowUp') {
-            currentFocus--;
-            addActive(suggestionItems);
-            if (currentFocus >= 0 && currentFocus < suggestionItems.length) {
-                suggestionItems[currentFocus].scrollIntoView({ block: 'nearest' });
-            }
-        } else if (e.key === 'Enter') {
-            e.preventDefault();
-            if (currentFocus > -1) {
-                if (suggestionItems) suggestionItems[currentFocus].click();
-            }
-        }
     });
 });
 
@@ -74,28 +62,6 @@ ipcRenderer.on('recipe-names-response', (event, fileNames) => {
         const input = this.value.toLowerCase();
         const suggestions = fileNames.filter(name => name.toLowerCase().includes(input));
         showSuggestions(suggestions, suggestionBoxRecipe, recipeNameInput);
-    });
-
-    recipeNameInput.addEventListener('keydown', function (e) {
-        const suggestionItems = suggestionBoxRecipe.getElementsByTagName('div');
-        if (e.key === 'ArrowDown') {
-            currentFocus++;
-            addActive(suggestionItems);
-            if (currentFocus >= 0 && currentFocus < suggestionItems.length) {
-                suggestionItems[currentFocus].scrollIntoView({ block: 'nearest' });
-            }
-        } else if (e.key === 'ArrowUp') {
-            currentFocus--;
-            addActive(suggestionItems);
-            if (currentFocus >= 0 && currentFocus < suggestionItems.length) {
-                suggestionItems[currentFocus].scrollIntoView({ block: 'nearest' });
-            }
-        } else if (e.key === 'Enter') {
-            e.preventDefault();
-            if (currentFocus > -1) {
-                if (suggestionItems) suggestionItems[currentFocus].click();
-            }
-        }
     });
 });
 
@@ -151,114 +117,135 @@ function showSuggestions(suggestions, suggestionBox, inputElement) {
     suggestionBox.style.width = `${rect.width}px`;
 }
 
+function addActive(items) {
+    if (!items) return false;
+    removeActive(items);
+    if (currentFocus >= items.length) currentFocus = 0;
+    if (currentFocus < 0) currentFocus = items.length - 1;
+    items[currentFocus].classList.add('autocomplete-active');
+}
 
-ipcRenderer.on('read-recipe-file-response', async (event, data) => {
-    if (data) {
-        // Fill the preparation textbox
-        preparationBox.value = data.preparation;
+function removeActive(items) {
+    for (let i = 0; i < items.length; i++) {
+        items[i].classList.remove('autocomplete-active');
+    }
+}
 
-        // Clear existing rows in the ingredient table
-        dynamicTable.innerHTML = '';
-
-        // Populate the ingredient table
-        for (let i = 0; i < data.ingredientsArray.length; i++) {
-            const ingredientName = data.ingredientsArray[i];
-            const quantity = data.quantitiesArray[i];
-
-            console.log(ingredientName);
-            ipcRenderer.send('read-ingredient-file', ingredientName);
-
-            // Request ingredient file content
-            let ingredientType = "";
-            let ingredientKcal = "";
-            let ingredientProtein = "";
-            let ingredientFiber = "";
-            let ingredientFat = "";
-            let ingredientSaturated = "";
-            let ingredientCarb = "";
-            let ingredientSugar = "";
-            let ingredientSalt = "";
-            let ingredientChol = "";
-            let ingredientCost = "";
-            let ingredientUnitWeight = "";
-            let ingredientUnitName = "";
-
-            await new Promise((resolve) => {
-                ipcRenderer.once('read-ingredient-file-response', (event, ingredientFileData) => {
-                    // Handle the ingredientFileData here
-                    ingredientType = ingredientFileData.type;
-                    ingredientKcal = ingredientFileData.kcal;
-                    ingredientProtein = ingredientFileData.protein;
-                    ingredientFiber = ingredientFileData.fiber;
-                    ingredientFat = ingredientFileData.fat;
-                    ingredientSaturated = ingredientFileData.saturated;
-                    ingredientCarb = ingredientFileData.carb;
-                    ingredientSugar = ingredientFileData.sugar;
-                    ingredientSalt = ingredientFileData.salt;
-                    ingredientChol = ingredientFileData.chol;
-                    ingredientCost = ingredientFileData.cost;
-                    ingredientUnitWeight = ingredientFileData.unitWeight;
-                    ingredientUnitName = ingredientFileData.unitName;
-                    resolve();
-                });
-            });
-
-            // If there is a unit, calculate the quantity in that unit
-            let quantityUnitString = "";
-            if(ingredientUnitWeight !== ""){
-                quantityUnitString = `
-                    <div style="display: inline;">
-                        ||
-                        <input class="numberInput" type="number" value="${quantity / ingredientUnitWeight}" placeholder="[0,∞]" min="0" step="0.01" oninput="validity.valid||(value='');"> 
-                        of 
-                        <span style="display: inline; color: #ff5e00;">${ingredientUnitName}</span>
-                    </div>
-                </td>
-                `;
-            }
-            else{
-                quantityUnitString = `</td>`;
-            }
-
-            // Compute correctly the cost based on unit or grams
-            let costString = "";
-            if (ingredientUnitWeight !== "") {
-                const units = quantity / ingredientUnitWeight;
-                costString = (ingredientCost * units).toFixed(2);
-            } else {
-                costString = (ingredientCost * quantity / 100).toFixed(2);
-            }
-            costString = String(costString);
-
-
-            const newRow = document.createElement('tr');
-            newRow.innerHTML = `
-                <td>${ingredientName}</td>
-                <td>
-                    <input type="number" value="${quantity}" class="numberInput" step="0.1"> g
-                ${quantityUnitString}
-                <td class="center">${ingredientType}</td>
-                <td class="center">${(ingredientKcal*quantity / 100).toFixed(0)}</td>
-                <td class="center">${(ingredientProtein*quantity / 100).toFixed(1)}</td>
-                <td class="center">${(ingredientFiber*quantity / 100).toFixed(1)}</td>
-                <td class="center">${(ingredientFat*quantity / 100).toFixed(1)}</td>
-                <td class="center">${(ingredientSaturated*quantity / 100).toFixed(1)}</td>
-                <td class="center">${(ingredientCarb*quantity / 100).toFixed(1)}</td>
-                <td class="center">${(ingredientSugar*quantity / 100).toFixed(1)}</td>
-                <td class="center">${(ingredientSalt*quantity / 100).toFixed(2)}</td>
-                <td class="center">${(ingredientChol*quantity / 100).toFixed(0)}</td>
-                <td class="center">${costString}</td>
-                <td class="center"><button id="deleteButton" class="deleteButton">-</button></td>
-            `;
-            dynamicTable.appendChild(newRow);
-
-            // Add event listener to the delete button
-            newRow.querySelector('#deleteButton').addEventListener('click', function() {
-                newRow.remove();
-            });
+ingredientNameInput.addEventListener('keydown', function (e) {
+    const suggestionItems = suggestionBox.getElementsByTagName('div');
+    if (e.key === 'ArrowDown') {
+        currentFocus++;
+        addActive(suggestionItems);
+        if (currentFocus >= 0 && currentFocus < suggestionItems.length) {
+            suggestionItems[currentFocus].scrollIntoView({ block: 'nearest' });
+        }
+    } else if (e.key === 'ArrowUp') {
+        currentFocus--;
+        addActive(suggestionItems);
+        if (currentFocus >= 0 && currentFocus < suggestionItems.length) {
+            suggestionItems[currentFocus].scrollIntoView({ block: 'nearest' });
+        }
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (currentFocus > -1) {
+            if (suggestionItems) suggestionItems[currentFocus].click();
         }
     }
 });
+
+recipeNameInput.addEventListener('keydown', function (e) {
+    const suggestionItems = suggestionBoxRecipe.getElementsByTagName('div');
+    if (e.key === 'ArrowDown') {
+        currentFocus++;
+        addActive(suggestionItems);
+        if (currentFocus >= 0 && currentFocus < suggestionItems.length) {
+            suggestionItems[currentFocus].scrollIntoView({ block: 'nearest' });
+        }
+    } else if (e.key === 'ArrowUp') {
+        currentFocus--;
+        addActive(suggestionItems);
+        if (currentFocus >= 0 && currentFocus < suggestionItems.length) {
+            suggestionItems[currentFocus].scrollIntoView({ block: 'nearest' });
+        }
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (currentFocus > -1) {
+            if (suggestionItems) suggestionItems[currentFocus].click();
+        }
+    }
+});
+
+ipcRenderer.on('read-recipe-file-response', async (event, data) => {
+    if (data) {
+        // Hide the suggestion box if the recipe exists
+        suggestionBoxRecipe.innerHTML = '';
+
+        preparationBox.value = data.preparation || '';
+        const ingredientsArray = data.ingredientsArray || [];
+        const quantitiesArray = data.quantitiesArray || [];
+
+        // Clear existing rows
+        dynamicTable.innerHTML = '';
+
+        for (let i = 0; i < ingredientsArray.length; i++) {
+            const ingredientName = ingredientsArray[i];
+            const quantityGrams = quantitiesArray[i];
+
+            // Request ingredient file content
+            const ingredientData = await getIngredientData(ingredientName);
+
+            // Create a new row for the ingredient
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td><input type="text" value="${ingredientName}" readonly></td>
+                <td>
+                    <input type="number" value="${quantityGrams}" class="numberInput" step="0.1"> g
+                    <div style="display: inline;">
+                        ||
+                        <input class="numberInput" type="number" value="${(quantityGrams / ingredientData.unitWeight).toFixed(2)}" placeholder="[0,∞]" min="0" step="0.01" oninput="validity.valid||(value='');"> 
+                        of 
+                        <span>${ingredientData.unitName}</span>
+                    </div>
+                </td>
+                <td class="center">${ingredientData.type}</td>
+                <td class="center">${(ingredientData.kcal * quantityGrams / 100).toFixed(2)}</td>
+                <td class="center">${(ingredientData.protein * quantityGrams / 100).toFixed(2)}</td>
+                <td class="center">${(ingredientData.fiber * quantityGrams / 100).toFixed(2)}</td>
+                <td class="center">${(ingredientData.fat * quantityGrams / 100).toFixed(2)}</td>
+                <td class="center">${(ingredientData.saturated * quantityGrams / 100).toFixed(2)}</td>
+                <td class="center">${(ingredientData.carb * quantityGrams / 100).toFixed(2)}</td>
+                <td class="center">${(ingredientData.sugar * quantityGrams / 100).toFixed(2)}</td>
+                <td class="center">${(ingredientData.salt * quantityGrams / 100).toFixed(2)}</td>
+                <td class="center">${(ingredientData.chol * quantityGrams / 100).toFixed(2)}</td>
+                <td class="center">${(ingredientData.cost * quantityGrams / 100).toFixed(2)}</td>
+                <td><button class="removeIngredient">-</button></td>
+            `;
+            dynamicTable.appendChild(newRow);
+
+            // Add event listener to the remove button
+            newRow.querySelector('.removeIngredient').addEventListener('click', function() {
+                newRow.remove();
+            });
+        }
+    } else {
+        // Show the suggestion box if the recipe does not exist
+        suggestionBoxRecipe.style.display = 'block';
+        dynamicTable.innerHTML = '';
+    }
+});
+
+function getIngredientData(ingredientName) {
+    return new Promise((resolve, reject) => {
+        ipcRenderer.once('read-ingredient-file-response', (event, data) => {
+            if (data) {
+                resolve(data);
+            } else {
+                reject('Failed to read ingredient file');
+            }
+        });
+        ipcRenderer.send('read-ingredient-file', ingredientName);
+    });
+}
 
 quantityGramsInput.addEventListener('input', function () {
     if (unitWeight > 0) {
@@ -305,20 +292,6 @@ function updateIngredientDetails() {
         } else {
             ingredientDetails.cost.textContent = ingredientData.cost ? `${(ingredientData.cost * grams / 100).toFixed(2)}` : '';
         }
-    }
-}
-
-function addActive(items) {
-    if (!items) return false;
-    removeActive(items);
-    if (currentFocus >= items.length) currentFocus = 0;
-    if (currentFocus < 0) currentFocus = items.length - 1;
-    items[currentFocus].classList.add('autocomplete-active');
-}
-
-function removeActive(items) {
-    for (let i = 0; i < items.length; i++) {
-        items[i].classList.remove('autocomplete-active');
     }
 }
 

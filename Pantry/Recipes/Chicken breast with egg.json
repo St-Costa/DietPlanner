@@ -1,11 +1,9 @@
 {
   "ingredientsArray": [
     "Egg",
-    "Chicken Breast",
-    "Chicken thighs"
+    "Chicken Breast"
   ],
   "quantitiesArray": [
-    100,
     100,
     100
   ],
