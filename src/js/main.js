@@ -327,23 +327,42 @@ ipcMain.on('update-recipe-preparation', (event, recipeAndpreparation) => {
     const filePath = path.join(__dirname, '../../Pantry/Recipes', `${recipeName}.json`);
     
     fs.readFile(filePath, 'utf8', (err, data) => {
-        if (err) {
+        if (err.code === 'ENOENT') {
+            // File does not exist, create a new one
+            recipeData = {
+                ingredientsArray: [],
+                quantitiesArray: [],
+                preparation: preparationText,
+            };
+            fs.writeFile(filePath, JSON.stringify(recipeData, null, 2), (err) => {
+                if (err) {
+                    console.error('Failed to write file:', err);
+                    event.reply('update-recipe-preparation-response', 'failure');
+                } else {
+                    event.reply('update-recipe-preparation-response', 'created');
+                }
+            });
+        }
+        else if (err) {
             console.error('Failed to read file:', err);
             event.reply('update-recipe-preparation-response', 'failure');
             return;
         }
+        else {
+            // File exists, update recipe
+            let recipeData = JSON.parse(data);
+            recipeData.preparation = preparationText;
+    
+            fs.writeFile(filePath, JSON.stringify(recipeData, null, 2), (err) => {
+                if (err) {
+                    console.error('Failed to write file:', err);
+                    event.reply('update-recipe-preparation-response', 'failure');
+                } else {
+                    console.log('File updated successfully');
+                    event.reply('update-recipe-preparation-response', 'update');
+                }
+            });
+        }
 
-        let recipeData = JSON.parse(data);
-        recipeData.preparation = preparationText;
-
-        fs.writeFile(filePath, JSON.stringify(recipeData, null, 2), (err) => {
-            if (err) {
-                console.error('Failed to write file:', err);
-                event.reply('update-recipe-preparation-response', 'failure');
-            } else {
-                console.log('File updated successfully');
-                event.reply('update-recipe-preparation-response', 'success');
-            }
-        });
     });
 });

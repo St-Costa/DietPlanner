@@ -79,13 +79,14 @@
         -->
     </table>
 
-    <table id="ingredientTable" class="table_border" style="border-collapse: collapse;">
+    <table id="ingredientTable" class="table_border">
+
         <colgroup>
             <col span="1">
-            <col style="border-left: 1px solid white; border-right: 1px solid white;">
-            <col style="border-right: 1px solid white;">
+            <col class="rightBorder leftBorder">
+            <col class="rightBorder">
             <col span="8">
-            <col style="border-left: 1px solid white;">
+            <col class="leftBorder">
         </colgroup>
         <thead>
             <tr>
@@ -119,7 +120,7 @@
         </tr>
         <tr>
             <td><input type="text" id="ingredientName"><div id="suggestionBox"></div></td>
-            <td>
+            <td id="tdQuantityInput">
                 <input type="number" id="quantityGrams" class="numberInput" step="0.1"> g
                 <div id="unitAlternative" style="display: inline;">
                     ||

@@ -1,17 +1,13 @@
 {
   "ingredientsArray": [
     "Kefir",
-    "Beef hamburger",
-    "Egg",
-    "Egg white",
-    "Hotdog"
+    "Hotdog",
+    "dd"
   ],
   "quantitiesArray": [
     500,
-    200,
-    75,
-    600,
-    250
+    250,
+    1122
   ],
   "preparation": ""
 }

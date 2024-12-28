@@ -109,3 +109,21 @@ table {
   width: 60%;
   margin: auto;
 }
+
+
+.table_border {
+  border-collapse: collapse;
+}
+
+.rightBorder {
+  border-right: 1px solid white;
+}
+
+.leftBorder {
+  border-left: 1px solid white;
+}
+
+.sumRow {
+  background-color: #ff5e00;
+  font-weight: bold;
+}
