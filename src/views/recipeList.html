@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/basic.css">
+    <link rel="stylesheet" href="../css/recipeList.css">
+    <title>Ingredient List</title>
+</head>
+<body>
+    <h1>Recipes list</h1>
+    <br>
+
+    <div class="center">
+        <button id="to_addRecipePage">Add recipe</button>
+    </div> 
+
+    <br>
+
+    <table id="recipeTable" class="table_border">
+        <thead>
+            <tr>
+                <th id="nameHeader" class="ordered">Recipe</th>
+                <th id="kcalHeader" class="number ordered">Kcal<br></th>
+                <th id="proteinHeader" class="number ordered">Prot<br><span>(g)</span></th>
+                <th id="fiberHeader" class="number ordered">Fiber<br><span>(g)</span></th>
+                <th id="fatHeader" class="number ordered">Fat<br><span>(g)</span></th>
+                <th id="saturatedHeader" class="number ordered">Sat Fat<br><span>(g)</span></th>
+                <th id="carbHeader" class="number ordered">Carb<br><span>(g)</span></th>
+                <th id="sugarHeader" class="number ordered">Sugar<br><span>(g)</span></th>
+                <th id="saltHeader" class="number ordered">Salt<br><span>(g)</span></th>
+                <th id="cholHeader" class="number ordered">Chol<br><span>(mg)</span></th>
+                <th id="costHeader" class="number ordered">Cost<br><span>(€)</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Dynamic rows will be added here -->
+        </tbody>
+    </table>
+
+    <script>
+        require('../js/recipeList.js');
+    </script>
+</body>
+</html>

@@ -45,7 +45,7 @@ app.on('activate', () => {
     }
 });
 
-// IPC listener to open a new window
+// Add ingredient window
 ipcMain.on('open-add-ingredient-window', (event, arg) => {
     let addIngredientView = new BrowserWindow({
         width: 500,
@@ -75,7 +75,7 @@ ipcMain.on('open-add-ingredient-window', (event, arg) => {
     });
 });
 
-// IPC listener to open a new window
+// Add recipe window
 ipcMain.on('open-add-recipe-window', (event, arg) => {
     let addIngredientView = new BrowserWindow({
         width: 1500,
@@ -96,7 +96,7 @@ ipcMain.on('open-add-recipe-window', (event, arg) => {
     addIngredientView.webContents.openDevTools();
 });
 
-// IPC listener to open a new window
+// Open ingriedient list window
 ipcMain.on('open-ingredient-list-window', (event, arg) => {
     let ingredientListView = new BrowserWindow({
         width: 1100,
@@ -116,6 +116,32 @@ ipcMain.on('open-ingredient-list-window', (event, arg) => {
 
     ingredientListView.webContents.openDevTools();
 });
+
+// Open recipe list window
+ipcMain.on('open-recipe-list-window', (event, arg) => {
+    let recipeListView = new BrowserWindow({
+        width: 1100,
+        height: 500,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+            enableRemoteModule: true
+        }
+    });
+
+    recipeListView.loadURL(url.format({
+        pathname: path.join(__dirname, '../views/recipeList.html'),
+        protocol: 'file:',
+        slashes: true
+    }));
+
+    recipeListView.webContents.openDevTools();
+});
+
+
+/****
+MANAGING INGREDIENTS
+****/
 
 // IPC listener to create a file
 ipcMain.on('create-file', (event, fileName, fileContent) => {
@@ -152,44 +178,46 @@ ipcMain.on('get-ingredient-names', (event) => {
 });
 
 // IPC listener to read ingredient file content
-ipcMain.on('read-ingredient-file', (event, ingredientName) => {
+ipcMain.handle('read-ingredient-file', async (event, ingredientName) => {
     const filePath = path.join(__dirname, '../../Pantry/Ingredients', `${ingredientName}.json`);
-    fs.readFile(filePath, 'utf8', (err, data) => {
-        if (err) {
-            console.error('Failed to read file:', err);
-            event.reply('read-ingredient-file-response', null);
-        } else {
-            console.log('File read successfully:', ingredientName);
-            event.reply('read-ingredient-file-response', JSON.parse(data));
-        }
-    });
-});
+    const data = await readJsonFile(filePath); // Use await to get the promise result
+    return data;
+}); 
+
+// Reading file content
+async function readJsonFile(filePath) {
+    try {
+        const data = await fs.promises.readFile(filePath, 'utf8');
+        return JSON.parse(data);
+    } catch (err) {
+        console.error('Failed to read file:', err);
+        return null;
+    }
+}
 
 // IPC listener to get file names for autocompletion
-ipcMain.on('get-recipe-names', (event) => {
+ipcMain.handle('get-recipe-names', async (event) => {
     const directoryPath = path.join(__dirname, '../../Pantry/Recipes');
-    fs.readdir(directoryPath, (err, files) => {
-        if (err) {
-            console.error('Failed to read directory:', err);
-            event.reply('recipe-names-response', []);
-        } else {
-            const fileNames = files.map(file => path.parse(file).name);
-            event.reply('recipe-names-response', fileNames);
-        }
-    });
+    try {
+        const files = await fs.promises.readdir(directoryPath);
+        const fileNames = files.map(file => path.parse(file).name);
+        return fileNames;
+    } catch (err) {
+        console.error('Failed to read directory:', err);
+        return [];
+    }
 });
 
 // IPC listener to read recipe file content
-ipcMain.on('read-recipe-file', (event, recipeName) => {
+ipcMain.handle('read-recipe-file', async (event, recipeName) => {
     const filePath = path.join(__dirname, '../../Pantry/Recipes', `${recipeName}.json`);
-    fs.readFile(filePath, 'utf8', (err, data) => {
-        if (err) {
-            console.error('Failed to read file:', err);
-            event.reply('read-recipe-file-response', null);
-        } else {
-            event.reply('read-recipe-file-response', JSON.parse(data));
-        }
-    });
+    try {
+        const data = await fs.promises.readFile(filePath, 'utf8');
+        return JSON.parse(data);
+    } catch (err) {
+        console.error('Failed to read file:', err);
+        return null;
+    }
 });
 
 // IPC listener to update a file

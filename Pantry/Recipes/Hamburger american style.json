@@ -2,12 +2,14 @@
   "ingredientsArray": [
     "Beef hamburger",
     "Chicken Breast",
-    "Kefir"
+    "Kefir",
+    "Milk"
   ],
   "quantitiesArray": [
     400,
     111,
-    11000
+    11000,
+    500
   ],
   "preparation": "Prendi hamburber, metti su fuoco, BUONAPPETITOTTTTsasd ma non dimenticare che..."
 }

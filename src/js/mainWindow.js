@@ -16,3 +16,10 @@ addRecipeBtn.addEventListener('click', function (event) {
     console.log("Opening add recipe");
     ipcRenderer.send('open-add-recipe-window');
 });
+
+
+const recipeListBtn = document.getElementById('recipeListButton');
+
+recipeListBtn.addEventListener('click', function (event) {
+    ipcRenderer.send('open-recipe-list-window');
+});
