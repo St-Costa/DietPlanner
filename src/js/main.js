@@ -67,7 +67,7 @@ ipcMain.on('open-add-ingredient-window', (event, arg) => {
 
     addIngredientView.on('closed', () => {
         addIngredientView = null;
-        // Send a message to the renderer process to refresh the table
+        // Send a message to the renderer process to refresh the ingredients list
         BrowserWindow.getAllWindows().forEach(win => {
             win.webContents.send('refresh-ingredient-list');
           });
@@ -177,12 +177,18 @@ ipcMain.on('get-ingredient-names', (event) => {
     });
 });
 
-// IPC listener to read ingredient file content
+
+// IPC listener to read recipe file content
 ipcMain.handle('read-ingredient-file', async (event, ingredientName) => {
     const filePath = path.join(__dirname, '../../Pantry/Ingredients', `${ingredientName}.json`);
-    const data = await readJsonFile(filePath); // Use await to get the promise result
-    return data;
-}); 
+    try {
+        const data = await fs.promises.readFile(filePath, 'utf8');
+        return JSON.parse(data);
+    } catch (err) {
+        console.error('Failed to read file:', err);
+        return null;
+    }
+});
 
 // Reading file content
 async function readJsonFile(filePath) {
@@ -235,43 +241,38 @@ ipcMain.on('update-file', (event, fileName, fileContent) => {
 });
 
 // IPC listener to get ingredient types from all ingredient files
-ipcMain.on('get-ingredient-types', (event) => {
+ipcMain.handle('get-ingredient-types', async (event) => {
     const directoryPath = path.join(__dirname, '../../Pantry/Ingredients');
-    fs.readdir(directoryPath, (err, files) => {
-        if (err) {
-            console.error('Failed to read directory:', err);
-            event.reply('ingredient-types-response', []);
-        } else {
-            const types = new Set();
-            files.forEach(file => {
-                const filePath = path.join(directoryPath, file);
-                const data = fs.readFileSync(filePath, 'utf8');
-                const ingredient = JSON.parse(data);
-                if (ingredient.type) {
-                    types.add(ingredient.type);
-                }
-            });
-            event.reply('ingredient-types-response', Array.from(types));
+    try {
+        const files = await fs.promises.readdir(directoryPath);
+        const types = new Set();
+        for (const file of files) {
+            const filePath = path.join(directoryPath, file);
+            const data = await fs.promises.readFile(filePath, 'utf8');
+            const ingredient = JSON.parse(data);
+            if (ingredient.type) {
+                types.add(ingredient.type);
+            }
         }
-    });
+        return Array.from(types);
+    } catch (err) {
+        console.error('Failed to read directory:', err);
+        return [];
+    }
 });
 
-// IPC listener to get ingredient list
-ipcMain.on('get-ingredient-list', (event) => {
+
+// IPC listener to get file names for autocompletion
+ipcMain.handle('get-ingredient-names', async (event) => {
     const directoryPath = path.join(__dirname, '../../Pantry/Ingredients');
-    fs.readdir(directoryPath, (err, files) => {
-        if (err) {
-            console.error('Failed to read directory:', err);
-            event.reply('ingredient-list-response', []);
-        } else {
-            const ingredients = files.map(file => {
-                const filePath = path.join(directoryPath, file);
-                const data = fs.readFileSync(filePath, 'utf8');
-                return JSON.parse(data);
-            });
-            event.reply('ingredient-list-response', ingredients);
-        }
-    });
+    try {
+        const files = await fs.promises.readdir(directoryPath);
+        const fileNames = files.map(file => path.parse(file).name);
+        return fileNames;
+    } catch (err) {
+        console.error('Failed to read directory:', err);
+        return [];
+    }
 });
 
 // IPC listener to create or update recipe file

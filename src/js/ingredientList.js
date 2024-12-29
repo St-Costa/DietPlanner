@@ -1,123 +1,112 @@
 const { ipcRenderer } = require('electron');
+const { sortTable } = require('./tableSorting');
 
 const ingredientTable = document.getElementById('ingredientTable').getElementsByTagName('tbody')[0];
 const typeFilterContainer = document.getElementById('typeFilterContainer');
-const headers = document.querySelectorAll('th');
 
-let ingredients = [];
-let filteredIngredients = [];
-let sortOrder = 'asc'; // Initial sort order
-let currentSortColumn = 'name'; // Initial sort column
-let currentFilterType = ''; // Initial filter type
+// Add event listeners for sorting
+document.getElementById('nameHeader').addEventListener('click', function() { sortTable(ingredientTable, 0); });
+document.getElementById('typeHeader').addEventListener('click', function() { sortTable(ingredientTable,1); });
+document.getElementById('kcalHeader').addEventListener('click', function() { sortTable(ingredientTable,2); });
+document.getElementById('proteinHeader').addEventListener('click', function() { sortTable(ingredientTable, 3); });
+document.getElementById('fiberHeader').addEventListener('click', function() { sortTable(ingredientTable, 4); });
+document.getElementById('fatHeader').addEventListener('click', function() { sortTable(ingredientTable,5); });
+document.getElementById('saturatedHeader').addEventListener('click', function() { sortTable(ingredientTable,6); });
+document.getElementById('carbHeader').addEventListener('click', function() { sortTable(ingredientTable,7); });
+document.getElementById('sugarHeader').addEventListener('click', function() { sortTable(ingredientTable,8); });
+document.getElementById('saltHeader').addEventListener('click', function() { sortTable(ingredientTable,9); });
+document.getElementById('cholHeader').addEventListener('click', function() { sortTable(ingredientTable,10); });
+document.getElementById('costHeader').addEventListener('click', function() { sortTable(ingredientTable,11); });
 
+// Open add ingredient page
 const addIngredientBtn = document.getElementById('to_addIngredientPage');
 
+// Open add ingredient window
 addIngredientBtn.addEventListener('click', function (event) {
     ipcRenderer.send('open-add-ingredient-window');
 });
 
-// Request ingredient list
-ipcRenderer.send('get-ingredient-list');
 
-// Request ingredient types
-ipcRenderer.send('get-ingredient-types');
-
-ipcRenderer.on('ingredient-list-response', (event, ingredientData) => {
-    ingredients = ingredientData;
-    filteredIngredients = ingredientData;
-    renderTable(filteredIngredients);
-});
-
-ipcRenderer.on('ingredient-types-response', (event, types) => {
-    renderTypeButtons(types);
-});
 
 // Listen for the refresh-ingredient-list message
 ipcRenderer.on('refresh-ingredient-list', () => {
     console.log("Refreshing ingredients");
-    ipcRenderer.send('get-ingredient-list');
+    fetchAndRenderIngredients();
 });
 
-function renderTypeButtons(types) {
-    // Add "All types" button
-    const allButton = document.createElement('button');
-    allButton.textContent = 'All types';
-    allButton.addEventListener('click', () => {
-        currentFilterType = '';
-        filterAndRenderTable();
-    });
-    typeFilterContainer.appendChild(allButton);
 
-    // Add buttons for each type
-    types.forEach(type => {
-        const button = document.createElement('button');
-        button.textContent = type;
-        button.addEventListener('click', () => {
-            currentFilterType = type;
-            filterAndRenderTable();
+
+// On opening of view, fetch and render recipes
+document.addEventListener('DOMContentLoaded', fetchAndRenderIngredients);
+
+async function fetchAndRenderIngredients() {
+    try {
+        // Render ingredients in table
+        ipcRenderer.invoke('get-ingredient-names').then((ingredientData) => {
+            // Read information from each recipe file
+            ingredientData.forEach(ingredient => {
+                ipcRenderer.invoke('read-ingredient-file', ingredient).then(async (ingredientData) => {
+                    await renderTableRow(ingredientData);
+                });
+            });
         });
-        typeFilterContainer.appendChild(button);
-    });
-}
 
-function filterAndRenderTable() {
-    if (currentFilterType) {
-        filteredIngredients = ingredients.filter(ingredient => ingredient.type === currentFilterType);
-    } else {
-        filteredIngredients = ingredients;
+        // Render types in table
+        ipcRenderer.invoke('get-ingredient-types').then((types) => {
+            const allButton = document.createElement('button');
+            allButton.textContent = 'All types';
+            allButton.addEventListener('click', () => {
+                filterByType("");
+            });
+            typeFilterContainer.appendChild(allButton);
+
+            types.forEach(type => {
+                const button = document.createElement('button');
+                button.textContent = type;
+                button.addEventListener('click', () => {
+                    filterByType(type);
+                });
+                typeFilterContainer.appendChild(button);
+            });
+        });
+
     }
-    sortAndRenderTable();
+    catch (err) {
+        console.error("Failed to fetch and render recipes:", err);
+    }
 }
 
-headers.forEach(header => {
-    header.addEventListener('click', () => {
-        const column = header.id.replace('Header', '').toLowerCase();
-        currentSortColumn = column;
-        sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-        sortAndRenderTable();
-    });
-});
+async function renderTableRow(ingredientData) {
+    const newRow = document.createElement('tr');
 
-function sortAndRenderTable() {
-    const sortedIngredients = filteredIngredients.sort((a, b) => {
-        const valA = isNaN(a[currentSortColumn]) ? a[currentSortColumn] : Number(a[currentSortColumn]);
-        const valB = isNaN(b[currentSortColumn]) ? b[currentSortColumn] : Number(b[currentSortColumn]);
+    newRow.innerHTML = `
+        <td class="left">${ingredientData.name}</td>
+        <td>${ingredientData.type}</td>
+        <td>${ingredientData.kcal}</td>
+        <td>${ingredientData.protein}</td>
+        <td>${ingredientData.fiber}</td>
+        <td>${ingredientData.fat}</td>
+        <td>${ingredientData.saturated}</td>
+        <td>${ingredientData.carb}</td>
+        <td>${ingredientData.sugar}</td>
+        <td>${ingredientData.salt}</td>
+        <td>${ingredientData.chol}</td>
+        <td>${ingredientData.cost}</td>
+        <td>${ingredientData.unitWeight}</td>
+        <td>${ingredientData.unitName}</td>
+    `;
 
-        if (typeof valA === 'string' && typeof valB === 'string') {
-            if (valA.toLowerCase() < valB.toLowerCase()) {
-                return sortOrder === 'asc' ? -1 : 1;
-            }
-            if (valA.toLowerCase() > valB.toLowerCase()) {
-                return sortOrder === 'asc' ? 1 : -1;
-            }
-        } else if (!isNaN(valA) && !isNaN(valB)) {
-            return sortOrder === 'asc' ? valA - valB : valB - valA;
+    ingredientTable.appendChild(newRow);
+}
+
+async function filterByType(type) {
+    const rows = ingredientTable.getElementsByTagName('tr');
+    for (let i = 0; i < rows.length; i++) {
+        const typeCell = rows[i].getElementsByTagName('td')[1];
+        if (type === '' || typeCell.textContent === type) {
+            rows[i].style.display = '';
+        } else {
+            rows[i].style.display = 'none';
         }
-        return 0;
-    });
-    renderTable(sortedIngredients);
-}
-
-function renderTable(data) {
-    ingredientTable.innerHTML = '';
-    data.forEach(ingredient => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${ingredient.name}</td>
-            <td class="center">${ingredient.type}</td>
-            <td class="center">${ingredient.kcal}</td>
-            <td class="center">${ingredient.protein}</td>
-            <td class="center">${ingredient.fiber}</td>
-            <td class="center">${ingredient.fat}</td>
-            <td class="center">${ingredient.saturated}</td>
-            <td class="center">${ingredient.carb}</td>
-            <td class="center">${ingredient.sugar}</td>
-            <td class="center">${ingredient.salt}</td>
-            <td class="center">${ingredient.chol}</td>
-            <td class="center">${ingredient.cost}</td>
-            <td class="center">${ingredient.unitWeight}</td>
-            <td class="center">${ingredient.unitName}</td>
-        `;
-        ingredientTable.appendChild(row);
-    });
+    }
 }
