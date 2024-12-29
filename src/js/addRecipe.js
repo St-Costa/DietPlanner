@@ -1,4 +1,5 @@
 const { ipcRenderer } = require('electron');
+const { messageBoxUpdate } = require('./messageBoxUpdate');
 
 const ingredientNameInput = document.getElementById('ingredientName');
 const suggestionBox = document.getElementById('suggestionBox');
@@ -204,7 +205,7 @@ preparationBox.addEventListener('keydown', function (e) {
         e.preventDefault();
         const recipeName = recipeNameInput.value.trim();
         if (recipeName === '') {
-            messageBoxUpdate('Recipe name cannot be empty!', false);
+            messageBoxUpdate(messageBoxDiv,'Recipe name cannot be empty!', false);
             return;
         }
         const preparationText = preparationBox.value.trim();
@@ -212,13 +213,13 @@ preparationBox.addEventListener('keydown', function (e) {
         ipcRenderer.send('update-recipe-preparation', { recipeName, preparationText });
         ipcRenderer.once('update-recipe-preparation-response', (response, message) => {
             if (message === 'created') {
-                messageBoxUpdate('Recipe created!', true);
+                messageBoxUpdate(messageBoxDiv,'Recipe created!', true);
             } 
             else if(message === 'update'){
-                messageBoxUpdate('Preparation updated!', true);
+                messageBoxUpdate(messageBoxDiv,'Preparation updated!', true);
             }
             else {
-                messageBoxUpdate('Failed to update preparation!', false);
+                messageBoxUpdate(messageBoxDiv,'Failed to update preparation!', false);
             }
         });
         preparationTextBeforeModification = preparationBox.value;
@@ -510,10 +511,10 @@ async function readIngredientsFromTableAndUpdateRecipe() {
     await new Promise((resolve) => {
         ipcRenderer.once('update-recipe-ingredients-response', (response, message) => {
             if (message === 'success') {
-                messageBoxUpdate('Recipe updated!', true);
+                messageBoxUpdate(messageBoxDiv,'Recipe updated!', true);
             } 
             else if (message === 'failure') {
-                messageBoxUpdate('Failed to update recipe!', false);
+                messageBoxUpdate(messageBoxDiv,'Failed to update recipe!', false);
             }
             resolve('resolved');
         });
@@ -610,12 +611,12 @@ document.getElementById('addIngredientButton').addEventListener('click', async f
     
     // Empty recipe name
     if (recipeName === '') {
-        messageBoxUpdate('Recipe name cannot be empty!', false);
+        messageBoxUpdate(messageBoxDiv,'Recipe name cannot be empty!', false);
         return;
     }
     // Empty ingredient name or invalid quantity
     else if (ingredientName === '' || isNaN(quantity) || quantity <= 0) {
-        messageBoxUpdate('Ingredient name and quantity cannot be empty!', false);
+        messageBoxUpdate(messageBoxDiv,'Ingredient name and quantity cannot be empty!', false);
         return;
     }
 
@@ -630,13 +631,13 @@ document.getElementById('addIngredientButton').addEventListener('click', async f
         ipcRenderer.once('add-ingredient-to-recipe-response', (response, message) => {
             if (message === 'success') {
                 ingredientAdded = true;
-                messageBoxUpdate('Ingredient added to recipe!', true);
+                messageBoxUpdate(messageBoxDiv,'Ingredient added to recipe!', true);
             } 
             if (message === 'Ingredient already exists') {
-                messageBoxUpdate('Ingredient is already present in the recipe!', false);
+                messageBoxUpdate(messageBoxDiv,'Ingredient is already present in the recipe!', false);
             }
             else if (message === 'failure') {
-                messageBoxUpdate('Failed to add ingredient to recipe!', false);
+                messageBoxUpdate(messageBoxDiv,'Failed to add ingredient to recipe!', false);
             }
             resolve('resolved');
         });
@@ -666,24 +667,3 @@ document.getElementById('addIngredientButton').addEventListener('click', async f
 });
 
 
-function messageBoxUpdate(messageText, messageBool){
-    let boxColor = ""
-    
-    if(messageBool){
-        boxColor = "#8cff69";
-    }
-    else if (!messageBool){
-        boxColor = "#ff2b2b";
-    }
-
-    messageBoxDiv.style.color = boxColor;
-    messageBoxDiv.textContent = messageText;
-    messageBoxDiv.style.border = '1px solid ' + boxColor;
-    messageBoxDiv.style.fontWeight = 'bold';
-    
-    setTimeout(function(){
-        messageBoxDiv.textContent = '';
-        messageBoxDiv.style.color = "";
-        messageBoxDiv.style.border = '1px none';
-    }, 3000);
-}

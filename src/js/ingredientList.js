@@ -1,8 +1,10 @@
 const { ipcRenderer } = require('electron');
 const { sortTable } = require('./tableSorting');
+const { messageBoxUpdate } = require('./messageBoxUpdate');
 
 const ingredientTable = document.getElementById('ingredientTable').getElementsByTagName('tbody')[0];
 const typeFilterContainer = document.getElementById('typeFilterContainer');
+const messageBoxDiv = document.getElementById('messageBox');
 
 // Add event listeners for sorting
 document.getElementById('nameHeader').addEventListener('click', function() { sortTable(ingredientTable, 0); });
@@ -41,6 +43,15 @@ document.addEventListener('DOMContentLoaded', fetchAndRenderIngredients);
 
 async function fetchAndRenderIngredients() {
     try {
+        // Clear existing rows
+        while (ingredientTable.firstChild) {
+            ingredientTable.removeChild(ingredientTable.firstChild);
+        }
+        // Clear existing type filter buttons
+        while (typeFilterContainer.firstChild) {
+            typeFilterContainer.removeChild(typeFilterContainer.firstChild);
+        }
+
         // Render ingredients in table
         ipcRenderer.invoke('get-ingredient-names').then((ingredientData) => {
             // Read information from each recipe file
@@ -80,7 +91,7 @@ async function renderTableRow(ingredientData) {
     const newRow = document.createElement('tr');
 
     newRow.innerHTML = `
-        <td class="left">${ingredientData.name}</td>
+        <td class="left" id="ingredientName">${ingredientData.name}</td>
         <td>${ingredientData.type}</td>
         <td>${ingredientData.kcal}</td>
         <td>${ingredientData.protein}</td>
@@ -94,7 +105,34 @@ async function renderTableRow(ingredientData) {
         <td>${ingredientData.cost}</td>
         <td>${ingredientData.unitWeight}</td>
         <td>${ingredientData.unitName}</td>
+        <td><button id="deleteButton">x</button></td>
     `;
+
+    // Delete behaviour
+    const deleteButton = newRow.querySelector('#deleteButton');
+
+    deleteButton.addEventListener('mouseover', () => {
+        newRow.querySelector('#ingredientName').style.color = '#ff5e00';
+    });
+    deleteButton.addEventListener('mouseout', () => {
+        newRow.querySelector('#ingredientName').style.color = '';
+    });
+
+    deleteButton.addEventListener('click', async () => {
+        const recipedUsingIngredient = await ipcRenderer.invoke('get-recipes-using-ingredient', ingredientData.name);
+        if (recipedUsingIngredient.length > 0) {
+            deletingIngredientPrompt(ingredientData.name, recipedUsingIngredient);
+        }
+        else{
+            const resultOfDeletion = await ipcRenderer.invoke('delete-ingredient', ingredientData.name);
+            if(resultOfDeletion){
+                messageBoxUpdate(messageBoxDiv, 'Ingredient deleted successfully', true);
+            }
+            else{
+                messageBoxUpdate(messageBoxDiv, 'Failed to delete ingredient', false);
+            }
+        }
+    });
 
     ingredientTable.appendChild(newRow);
 }
@@ -109,4 +147,47 @@ async function filterByType(type) {
             rows[i].style.display = 'none';
         }
     }
+}
+
+function deletingIngredientPrompt(ingredientName, recipeList){
+    let boxColor = "#ffc685";
+    messageBoxDiv.style.color = boxColor;
+    messageBoxDiv.style.border = '1px solid ' + boxColor;
+    messageBoxDiv.style.fontWeight = 'bold';
+
+
+    messageBoxDiv.innerHTML = `
+        <div style="text-align: center;"><b style="color: #ff5e00">${ingredientName}</b> is used in:</div>
+        <br>
+        <div style="margin: auto; text-align: left; width: fit-content;">  •  ${recipeList.join('<br>  •  ')}</div>
+        <br>
+        <div style="text-align: center;">Are you sure?</div>
+    `;
+
+    // Add buttons
+    const yesButton = document.createElement('button');
+    yesButton.textContent = 'Yes';
+    yesButton.addEventListener('click', async () => {
+        const resultOfDeletion = await ipcRenderer.invoke('delete-ingredient', ingredientName);
+        messageBoxDiv.textContent = '';
+        messageBoxDiv.style.color = "";
+        messageBoxDiv.style.border = '1px none';
+        if(resultOfDeletion){
+            messageBoxUpdate(messageBoxDiv, 'Ingredient deleted successfully', true);
+        }
+        else{
+            messageBoxUpdate(messageBoxDiv, 'Failed to delete ingredient', false);
+        }
+    });
+
+    const noButton = document.createElement('button');
+    noButton.textContent = 'No';
+    noButton.addEventListener('click', () => {
+        messageBoxDiv.textContent = '';
+        messageBoxDiv.style.color = "";
+        messageBoxDiv.style.border = '1px none';
+    });
+
+    messageBoxDiv.appendChild(yesButton);
+    messageBoxDiv.appendChild(noButton);
 }

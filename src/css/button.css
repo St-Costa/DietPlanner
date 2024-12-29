@@ -13,3 +13,7 @@ button {
 button:hover {
     background-color: #ff2600;  
 }
+#deleteButton {
+    padding: 3px 7px;
+    margin: 0px;
+}

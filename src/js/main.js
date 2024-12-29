@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const url = require('url');
 const fs = require('fs');
@@ -99,7 +99,7 @@ ipcMain.on('open-add-recipe-window', (event, arg) => {
 // Open ingriedient list window
 ipcMain.on('open-ingredient-list-window', (event, arg) => {
     let ingredientListView = new BrowserWindow({
-        width: 1100,
+        width: 1500,
         height: 500,
         webPreferences: {
             nodeIntegration: true,
@@ -181,13 +181,7 @@ ipcMain.on('get-ingredient-names', (event) => {
 // IPC listener to read recipe file content
 ipcMain.handle('read-ingredient-file', async (event, ingredientName) => {
     const filePath = path.join(__dirname, '../../Pantry/Ingredients', `${ingredientName}.json`);
-    try {
-        const data = await fs.promises.readFile(filePath, 'utf8');
-        return JSON.parse(data);
-    } catch (err) {
-        console.error('Failed to read file:', err);
-        return null;
-    }
+    return readJsonFile(filePath);
 });
 
 // Reading file content
@@ -201,9 +195,68 @@ async function readJsonFile(filePath) {
     }
 }
 
-// IPC listener to get file names for autocompletion
+/**** DELETE FILES   */
+ipcMain.handle('get-recipes-using-ingredient', async (event, ingredient) => {
+    const directoryPath = path.join(__dirname, '../../Pantry/Recipes');
+    const recipeNames = await readFilesNameFromDirectory(directoryPath);
+
+    let recipesUsingIngredient = [];
+
+    for (const recipe of recipeNames) {
+        try {
+            const filePath = path.join(__dirname, '../../Pantry/Recipes', `${recipe}.json`);
+            const recipeData = await readJsonFile(filePath);
+            if (recipeData.ingredientsArray.includes(ingredient)) {
+                recipesUsingIngredient.push(recipe);
+            }
+        } catch (err) {
+            console.error(`Failed to read recipe file for ${recipe}:`, err);
+        }
+    }
+
+    return recipesUsingIngredient;
+});
+
+ipcMain.handle('delete-ingredient', async (event, ingredient) => {
+    const filePath = path.join(__dirname, '../../Pantry/Ingredients', `${ingredient}.json`);
+    console.log(filePath);
+    let resultOfDeletion = await deleteFile(filePath);
+    
+    BrowserWindow.getAllWindows().forEach(win => {
+        win.webContents.send('refresh-ingredient-list');
+    });
+
+    return resultOfDeletion;
+});
+
+ipcMain.handle('delete-recipe', async (event, recipe) => {
+    const filePath = path.join(__dirname, '../../Pantry/Recipes', `${recipe}.json`);
+    return deleteFile(filePath);
+});
+
+async function deleteFile(filePath) {
+    try {
+        await fs.promises.unlink(filePath);
+        console.log('File deleted successfully');
+        return true;
+    } catch (err) {
+        console.error('Failed to delete file:', err);
+        return false;
+    }
+}
+
+/*** READ ALL FILE */
 ipcMain.handle('get-recipe-names', async (event) => {
     const directoryPath = path.join(__dirname, '../../Pantry/Recipes');
+    return readFilesNameFromDirectory(directoryPath);
+});
+
+ipcMain.handle('get-ingredient-names', async (event) => {
+    const directoryPath = path.join(__dirname, '../../Pantry/Ingredients');
+    return readFilesNameFromDirectory(directoryPath);
+});
+
+async function readFilesNameFromDirectory(directoryPath) {
     try {
         const files = await fs.promises.readdir(directoryPath);
         const fileNames = files.map(file => path.parse(file).name);
@@ -212,18 +265,12 @@ ipcMain.handle('get-recipe-names', async (event) => {
         console.error('Failed to read directory:', err);
         return [];
     }
-});
+}
 
 // IPC listener to read recipe file content
 ipcMain.handle('read-recipe-file', async (event, recipeName) => {
     const filePath = path.join(__dirname, '../../Pantry/Recipes', `${recipeName}.json`);
-    try {
-        const data = await fs.promises.readFile(filePath, 'utf8');
-        return JSON.parse(data);
-    } catch (err) {
-        console.error('Failed to read file:', err);
-        return null;
-    }
+    return readJsonFile(filePath);
 });
 
 // IPC listener to update a file
@@ -241,39 +288,23 @@ ipcMain.on('update-file', (event, fileName, fileContent) => {
 });
 
 // IPC listener to get ingredient types from all ingredient files
-ipcMain.handle('get-ingredient-types', async (event) => {
+ipcMain.handle('get-ingredient-types', async () => {
     const directoryPath = path.join(__dirname, '../../Pantry/Ingredients');
-    try {
-        const files = await fs.promises.readdir(directoryPath);
-        const types = new Set();
-        for (const file of files) {
-            const filePath = path.join(directoryPath, file);
-            const data = await fs.promises.readFile(filePath, 'utf8');
-            const ingredient = JSON.parse(data);
-            if (ingredient.type) {
-                types.add(ingredient.type);
-            }
+    const ingredientNames = await readFilesNameFromDirectory(directoryPath);
+    const types = new Set();
+
+    for (const ingredient of ingredientNames) {
+        const filePath = path.join(__dirname, '../../Pantry/Ingredients', `${ingredient}.json`);
+        const data = await readJsonFile(filePath);
+        if (data.type) {
+            types.add(data.type);
         }
-        return Array.from(types);
-    } catch (err) {
-        console.error('Failed to read directory:', err);
-        return [];
     }
+    return Array.from(types);
 });
 
 
-// IPC listener to get file names for autocompletion
-ipcMain.handle('get-ingredient-names', async (event) => {
-    const directoryPath = path.join(__dirname, '../../Pantry/Ingredients');
-    try {
-        const files = await fs.promises.readdir(directoryPath);
-        const fileNames = files.map(file => path.parse(file).name);
-        return fileNames;
-    } catch (err) {
-        console.error('Failed to read directory:', err);
-        return [];
-    }
-});
+
 
 // IPC listener to create or update recipe file
 ipcMain.on('add-ingredient-to-recipe', (event, recipeAndIngredients) => {
