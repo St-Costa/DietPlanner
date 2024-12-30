@@ -1,0 +1,16 @@
+{
+  "name": "Kiwi",
+  "type": "fruit",
+  "kcal": "32",
+  "protein": "32",
+  "fiber": "32",
+  "fat": "32",
+  "saturated": "3",
+  "carb": "32",
+  "sugar": "32",
+  "salt": "32",
+  "chol": "32",
+  "cost": "2",
+  "unitWeight": "500",
+  "unitName": "5 kiwi pack"
+}

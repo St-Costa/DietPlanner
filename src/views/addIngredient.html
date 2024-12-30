@@ -5,10 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../css/addIngredient.css">
     <link rel="stylesheet" href="../css/basic.css">
+    <link rel="stylesheet" href="../css/button.css">
+    <link rel="stylesheet" href="../css/messageBox.css">
     <title>Inserisci Ingrediente</title>
 </head>
 <body>
     <h1>Add ingredient</h1>
+    <br>
+
+    <br>
+    <div id="messageBox" class="center messageBox"></div>
     <br>
 
     <table id="ingredientTable">
@@ -27,7 +33,7 @@
             </td>
         </tr>
         <tr><th colspan="2"><hr style="width: 100%; border: 1px solid #ffffff;"></th></tr>
-        <tr><th colspan="2"><h5>Nutritional value</h5></th></tr>
+        <tr><th colspan="2"><h2>Nutritional value</h2></th></tr>
         <tr><td colspan="2"><p class="center">Every information must hold for 100g</p></td></tr>
         <tr>
             <th class="right">Kcal: </th>
@@ -66,7 +72,7 @@
             <td class="left"><input type="number" id="ingredientChol" class="numberInput"/> mg</td>
         </tr>
         <tr><th colspan="2"><hr style="width: 100%; border: 1px solid #ffffff;"></th></tr>
-        <tr><th colspan="2"><h5>Product details</h5></th></tr>
+        <tr><th colspan="2"><h2>Product details</h2></th></tr>
         <tr>
             <th class="right">Cost: </th>
             <td class="left"><input type="number" id="ingredientCost" class="longInput" placeholder="€/100g or per unit"/> €</td>
@@ -81,9 +87,7 @@
         </tr>
     </table>
 
-    <br>
-    <div id="resultOfClick" class="center"></div>
-    <br>
+    
 
     <div class="center">
         <button id="addIngredient">Empty inputs</button>

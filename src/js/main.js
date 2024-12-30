@@ -140,42 +140,39 @@ ipcMain.on('open-recipe-list-window', (event, arg) => {
 
 
 /****
-MANAGING INGREDIENTS
+CREATE FILES
 ****/
+ipcMain.handle('create-ingredient-file', async (event, ingredientName, ingredientData) => {
+    const filePath = path.join(__dirname, '../../Pantry/Ingredients', `${ingredientName}.json`);
+    let result = createFile(filePath, ingredientData);
+    BrowserWindow.getAllWindows().forEach(win => {
+        win.webContents.send('refresh-ingredient-list');
+    });
+    return result;
+});
 
-// IPC listener to create a file
-ipcMain.on('create-file', (event, fileName, fileContent) => {
-    const filePath = path.join(__dirname, '../../Pantry/Ingredients', fileName);
-    
+ipcMain.handle('create-recipe-file', async (event, recipeName, recipeData) => {
+    const filePath = path.join(__dirname, '../../Pantry/Recipes', `${recipeName}.json`);
+    return createFile(filePath, recipeData);
+});
+
+async function createFile(filePath, fileContent) {
     if (fs.existsSync(filePath)) {
         console.error('File already exists:', filePath);
-        event.reply('create-file-response', 'file-exists');
+        return 'file-exists';
     } else {
-        fs.writeFile(filePath, fileContent, (err) => {
-            if (err) {
-                console.error('Failed to create file:', err);
-                event.reply('create-file-response', 'failure');
-            } else {
-                console.log('File created successfully');
-                event.reply('create-file-response', 'success');
-            }
-        });
-    }
-});
-
-// IPC listener to get file names for autocompletion
-ipcMain.on('get-ingredient-names', (event) => {
-    const directoryPath = path.join(__dirname, '../../Pantry/Ingredients');
-    fs.readdir(directoryPath, (err, files) => {
-        if (err) {
-            console.error('Failed to read directory:', err);
-            event.reply('ingredient-names-response', []);
-        } else {
-            const fileNames = files.map(file => path.parse(file).name);
-            event.reply('ingredient-names-response', fileNames);
+        try {
+            await fs.promises.writeFile(filePath, JSON.stringify(fileContent, null, 2));
+            console.log('File created successfully');
+            return 'success';
+        } catch (err) {
+            console.error('Failed to create file:', err);
+            return 'failure';
         }
-    });
-});
+    }
+}
+
+
 
 
 // IPC listener to read recipe file content
@@ -273,19 +270,39 @@ ipcMain.handle('read-recipe-file', async (event, recipeName) => {
     return readJsonFile(filePath);
 });
 
-// IPC listener to update a file
-ipcMain.on('update-file', (event, fileName, fileContent) => {
-    const filePath = path.join(__dirname, '../../Pantry/Ingredients', fileName);
-    fs.writeFile(filePath, fileContent, (err) => {
-        if (err) {
-            console.error('Failed to update file:', err);
-            event.reply('update-file-response', 'failure');
-        } else {
-            console.log('File updated successfully');
-            event.reply('update-file-response', 'success');
-        }
+// Update files (overwriting)
+ipcMain.handle('update-ingredient-file', async (event, ingredientName, fileContent) => {
+    const filePath = path.join(__dirname, '../../Pantry/Ingredients', `${ingredientName}.json`);
+    let result = updateFile(filePath, fileContent);
+    BrowserWindow.getAllWindows().forEach(win => {
+        win.webContents.send('refresh-ingredient-list');
     });
+    return result;
 });
+
+ipcMain.handle('update-recipe-file', async (event, recipeName, fileContent) => {
+    const filePath = path.join(__dirname, '../../Pantry/Recipes', `${recipeName}.json`);
+    return updateFile(filePath, fileContent);
+});
+
+async function updateFile(filePath, fileContent) {
+    if (typeof fileContent !== 'string') {
+        fileContent = JSON.stringify(fileContent, null, 2);
+    }
+    if (!fs.existsSync(filePath)) {
+        console.error('File does not exist:', filePath);
+        return 'file-not-found';
+    }
+    try {
+        await fs.promises.writeFile(filePath, fileContent);
+        console.log('File updated successfully');
+        return 'success';
+    } catch (err) {
+        console.error('Failed to update file:', err);
+        return 'failure';
+    }
+}
+
 
 // IPC listener to get ingredient types from all ingredient files
 ipcMain.handle('get-ingredient-types', async () => {

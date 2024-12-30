@@ -1,0 +1,16 @@
+{
+  "name": "Water",
+  "type": "Drink",
+  "kcal": "0",
+  "protein": "0",
+  "fiber": "0",
+  "fat": "0",
+  "saturated": "0",
+  "carb": "0",
+  "sugar": "0",
+  "salt": "0",
+  "chol": "0",
+  "cost": "1",
+  "unitWeight": "500",
+  "unitName": "500g bottle of water"
+}
