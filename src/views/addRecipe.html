@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../css/basic.css">
     <link rel="stylesheet" href="../css/addRecipe.css">
+    <link rel="stylesheet" href="../css/button.css">
+    <link rel="stylesheet" href="../css/table.css">
+    <link rel="stylesheet" href="../css/messageBox.css">
     <title>Add Recipe</title>
 </head>
 <body>
@@ -27,8 +30,8 @@
 
     <table>
         <tr>
-            <th class="right">Recipe:</th>
-            <td colspan="2">
+            <th class="right noStyle">Recipe:</th>
+            <td colspan="2" class="left">
                 <input type="text" id="recipeName">
                 <div id="suggestionBox_recipe"></div>
             </td>
@@ -37,46 +40,11 @@
             <td colspan="3" style="padding-top: 20px;"></td>
         </tr>
         <tr>
-            <th class="right top">Preparation: </th>
+            <th class="right top noStyle">Preparation: </th>
             <td colspan="2">
                 <textarea id="preparation" rows="10" cols="50"></textarea>
             </td>
         </tr>
-        <!-- 
-        <tr>
-            <th class="right">Ingredient:</th>
-            <td colspan="2">
-                <input type="text" id="ingredientName">
-                <div id="suggestionBox"></div>
-            </td>
-        </tr>
-        -->
-        <!--
-        <tr>
-            <th class="right">Quantity:</th>
-            <td class="numberInput" >
-                <input type="number" id="quantityGrams">
-            </td>
-            <td class="left">
-                g or
-            </td>
-        </tr>
-        <tr id="fractionRow">
-            <td></td>
-            <td class="numberInput">
-                <input type="number" id="quantityUnit" placeholder="x∈[0,inf]" min="0" step="0.01" oninput="validity.valid||(value='');">
-            </td>
-            <td class="left">
-                of <div id="unitWeight">(unit weight) g</div> 
-            </td>
-        </tr>
-        <tr id="unitNameRow">
-            <td colspan="2"></td>
-            <td class="left">
-                of <span id="unitName">(unit name)</span>
-            </td>
-        </tr>
-        -->
     </table>
 
     <table id="ingredientTable" class="table_border">
@@ -115,12 +83,12 @@
             <td colspan="14" style="padding-top: 20px;"></td>
         </tr>
         <tr>
-            <td>Add ingredient:</td>
+            <td class="bottom left">Add ingredient:</td>
             <td colspan="13"></td>
         </tr>
         <tr>
             <td><input type="text" id="ingredientName"><div id="suggestionBox"></div></td>
-            <td id="tdQuantityInput">
+            <td id="tdQuantityInput" class="left">
                 <input type="number" id="quantityGrams" class="numberInput" step="0.1"> g
                 <div id="unitAlternative" style="display: inline;">
                     ||

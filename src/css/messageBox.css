@@ -15,4 +15,6 @@
   border-radius: 5px;
   width: 60%;
   margin: auto;
+  height: 20px;
+  min-height: 20px; /* Ensures the div occupies the same space even when empty */
 }

@@ -1,0 +1,14 @@
+{
+  "recipeName": "Recipe test 2",
+  "ingredientsArray": [
+    "Lemon",
+    "Chicken breast",
+    "Water"
+  ],
+  "quantitiesArray": [
+    111,
+    600,
+    250
+  ],
+  "preparationText": "prova di recipe test"
+}

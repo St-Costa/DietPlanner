@@ -36,3 +36,11 @@ h2 {
 .top {
   vertical-align: top;
 }
+.bottom {
+  vertical-align: bottom;
+}
+
+.noStyle {
+  text-decoration: none;
+  background-color: transparent;
+}

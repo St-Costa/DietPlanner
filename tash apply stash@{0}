@@ -1,0 +1,7 @@
+stash@{0}: WIP on main: 6338f53 Optimized the code for adding Ingredients using handle instead of ".on"
+stash@{1}: WIP on main: cc29c38 Prettified the messages in recipe adding
+stash@{2}: WIP on main: e59fb2e When recipe is selected the ingredients of the recipe are displayed in the table.
+stash@{3}: WIP on main: 4145e0f Ingredient can be selected as well as quantity, both in grams or fraction of unit.
+stash@{4}: WIP on main: 05d89d3 Fixed suggestions with a "include" logic and fixed the scrolling down the suggestions with arrow keys
+stash@{5}: WIP on main: 05d89d3 Fixed suggestions with a "include" logic and fixed the scrolling down the suggestions with arrow keys
+stash@{6}: WIP on main: 05d89d3 Fixed suggestions with a "include" logic and fixed the scrolling down the suggestions with arrow keys

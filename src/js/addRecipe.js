@@ -14,7 +14,9 @@ const preparationBox = document.getElementById('preparation');
 const dynamicTable = document.getElementById('dynamicTable');
 const addIngredientButton = document.getElementById('addIngredientButton');
 const tdQuantityInput = document.getElementById('tdQuantityInput');
-const ingredientDetails = {
+
+let ingredientToAdd_details = {};
+const suggestedIngredientDetails = {
     type: document.getElementById('typeSuggestedIngredient'),
     kcal: document.getElementById('kcalSuggestedIngredient'),
     protein: document.getElementById('proteinSuggestedIngredient'),
@@ -27,61 +29,59 @@ const ingredientDetails = {
     chol: document.getElementById('cholSuggestedIngredient'),
     cost: document.getElementById('costSuggestedIngredient')
 };
+let recipeNutritionalValue = {};
+
 
 let currentFocus = -1;
-let unitWeight = 0;
-let ingredientData = {};
 
 
-// Request ingredient names for autocompletion
-ingredientNameInput.addEventListener('focus', function () {
-    ipcRenderer.send('get-ingredient-names');
-});
-
-ingredientNameInput.addEventListener('input', function () {
-    const ingredientName = ingredientNameInput.value.trim();
-    if (ingredientName) {
-        ipcRenderer.send('read-ingredient-file', ingredientName);
-    } else {
+// INGREDIENT NAME AUTOCOMPLETE
+ingredientNameInput.addEventListener('focus', async function () {
+    let ingredientsNameList = await ipcRenderer.invoke('get-ingredient-names');
+    const input = this.value.toLowerCase();
+    const suggestions = ingredientsNameList.filter(name => name.toLowerCase().includes(input));
+    if (!suggestions.includes(input)) {
         clearSuggestedIngredientRow();
     }
+    showSuggestions(suggestions, suggestionBox, ingredientNameInput);
 });
+ingredientNameInput.addEventListener('input', async function () {
+    let ingredientsNameList = await ipcRenderer.invoke('get-ingredient-names');
+    const input = this.value.toLowerCase();
+    const suggestions = ingredientsNameList.filter(name => name.toLowerCase().includes(input));
+    if (!suggestions.includes(input)) {
+        clearSuggestedIngredientRow();
+    }
+    showSuggestions(suggestions, suggestionBox, ingredientNameInput);
+});
+
+
 
 // Request recipe names for autocompletion
-recipeNameInput.addEventListener('focus', function () {
-    ipcRenderer.send('get-recipe-names');
-});
+recipeNameInput.addEventListener('focus', async function () {
+    let recipesNameList = await ipcRenderer.invoke('get-recipe-names');
+    const recipeName = recipeNameInput.value.trim().toLowerCase();
 
-recipeNameInput.addEventListener('input', function () {
-    const recipeName = recipeNameInput.value.trim();
-    if (recipeName) {
-        ipcRenderer.send('read-recipe-file', recipeName);
-    } else {
-        // Empty the dynamic table if the recipe name is empty
+    const suggestions = recipesNameList.filter(name => name.toLowerCase().includes(recipeName.toLowerCase()));
+    showSuggestions(suggestions, suggestionBoxRecipe, recipeNameInput);
+});
+recipeNameInput.addEventListener('input', async function () {
+    let recipesNameList = await ipcRenderer.invoke('get-recipe-names');
+    const recipeName = recipeNameInput.value.trim().toLowerCase();
+
+    // If the recipe does not exist, clear table
+    if (!recipesNameList.includes(recipeName)) {
         dynamicTable.innerHTML = '';
+        preparationBox.value = '';
+        recipeNutritionalValue = {};
+        clearSuggestedIngredientRow();
     }
+
+    const suggestions = recipesNameList.filter(name => name.toLowerCase().includes(recipeName));
+    showSuggestions(suggestions, suggestionBoxRecipe, recipeNameInput);
 });
 
-ipcRenderer.on('ingredient-names-response', (event, fileNames) => {
-    ingredientNameInput.addEventListener('input', function () {
-        const input = this.value.toLowerCase();
-        const suggestions = fileNames.filter(name => name.toLowerCase().includes(input));
 
-        if (!suggestions.includes(input)) {
-            clearSuggestedIngredientRow();
-        }
-
-        showSuggestions(suggestions, suggestionBox, ingredientNameInput);
-    });
-});
-
-ipcRenderer.on('recipe-names-response', (event, fileNames) => {
-    recipeNameInput.addEventListener('input', function () {
-        const input = this.value.toLowerCase();
-        const suggestions = fileNames.filter(name => name.toLowerCase().includes(input));
-        showSuggestions(suggestions, suggestionBoxRecipe, recipeNameInput);
-    });
-});
 
 function showSuggestions(suggestions, suggestionBox, inputElement) {
     suggestionBox.innerHTML = '';
@@ -91,37 +91,35 @@ function showSuggestions(suggestions, suggestionBox, inputElement) {
         div.textContent = suggestion;
         div.style.padding = '8px';
         div.style.cursor = 'pointer';
-        div.addEventListener('click', function () {
+        div.addEventListener('click', async function () {
             inputElement.value = suggestion;
             suggestionBox.innerHTML = '';
             if (inputElement === recipeNameInput) {
                 // Request recipe file content
-                ipcRenderer.send('read-recipe-file', suggestion);
+                recipeNutritionalValue = await ipcRenderer.invoke('read-recipe-file', suggestion);
+                renderRecipeTable();
             } else if (inputElement === ingredientNameInput) {
                 // Reset quantity inputs
                 quantityGramsInput.value = 0;
                 quantityUnitInput.value = 0;
                 // Request ingredient file content
-                ipcRenderer.send('read-ingredient-file', suggestion);
-                ipcRenderer.once('read-ingredient-file-response', (event, data) => {
-                    if (data) {
-                        ingredientData = data;
-                        tdQuantityInput.style.display = 'table-cell';
-                        addIngredientButton.style.display = 'inline';
-                        if (data.unitName) {
-                            unitNameSpan.textContent = data.unitName;
-                            unitAlternativeSpan.style.display = 'inline';
-                            unitWeight = data.unitWeight;
-                        } else {
-                            unitAlternativeSpan.style.display = 'none';
-                            unitWeight = 0;
-                        }
-                        updateIngredientDetails();
+                ingredientToAdd_details = await ipcRenderer.invoke('read-ingredient-file', suggestion);
+                if (ingredientToAdd_details) {
+                    tdQuantityInput.style.display = 'table-cell';
+                    addIngredientButton.style.display = 'inline';
+                    if (ingredientToAdd_details.unitName) {
+                        unitNameSpan.textContent = ingredientToAdd_details.unitName;
+                        unitAlternativeSpan.style.display = 'inline';
+                        unitWeight = ingredientToAdd_details.unitWeight;
+                    } else {
+                        unitAlternativeSpan.style.display = 'none';
+                        unitWeight = 0;
                     }
-                    else{
-                        clearSuggestedIngredientRow();
-                    }
-                });
+                    updateIngredientDetails();
+                }
+                else{
+                    clearSuggestedIngredientRow();
+                }
             }
         });
         div.addEventListener('mouseover', function () {
@@ -208,20 +206,9 @@ preparationBox.addEventListener('keydown', function (e) {
             messageBoxUpdate(messageBoxDiv,'Recipe name cannot be empty!', false);
             return;
         }
-        const preparationText = preparationBox.value.trim();
-        
-        ipcRenderer.send('update-recipe-preparation', { recipeName, preparationText });
-        ipcRenderer.once('update-recipe-preparation-response', (response, message) => {
-            if (message === 'created') {
-                messageBoxUpdate(messageBoxDiv,'Recipe created!', true);
-            } 
-            else if(message === 'update'){
-                messageBoxUpdate(messageBoxDiv,'Preparation updated!', true);
-            }
-            else {
-                messageBoxUpdate(messageBoxDiv,'Failed to update preparation!', false);
-            }
-        });
+
+        createOrUpdateRecipe();
+
         preparationTextBeforeModification = preparationBox.value;
     }
 });
@@ -231,18 +218,20 @@ preparationBox.addEventListener('blur', function () {
 });
 
 
-ipcRenderer.on('read-recipe-file-response', async (event, data) => {
-    if (data) {
+async function renderRecipeTable () {
+    if(!recipeNutritionalValue){
+        return;
+    }
+    else{
         // Hide the suggestion box if the recipe exists
         suggestionBoxRecipe.innerHTML = '';
 
-        preparationBox.value = data.preparation || '';
-
+        preparationBox.value = recipeNutritionalValue.preparationText || '';
         //Update preparation default text for local modifications
-        preparationTextBeforeModification = data.preparation || '';
+        preparationTextBeforeModification = recipeNutritionalValue.preparationText || '';
 
-        const ingredientsArray = data.ingredientsArray || [];
-        const quantitiesArray = data.quantitiesArray || [];
+        const ingredientsArray = recipeNutritionalValue.ingredientsArray || [];
+        const quantitiesArray = recipeNutritionalValue.quantitiesArray || [];
 
         // Sum of values
         let kcalSum = 0;
@@ -256,7 +245,6 @@ ipcRenderer.on('read-recipe-file-response', async (event, data) => {
         let cholSum = 0;
         let costSum = 0;
 
-
         // Clear existing rows
         dynamicTable.innerHTML = '';
 
@@ -265,7 +253,7 @@ ipcRenderer.on('read-recipe-file-response', async (event, data) => {
             const quantityGrams = quantitiesArray[i];
 
             // Request ingredient file content
-            const ingredientData = await getIngredientData(ingredientName);
+            const ingredientData = await ipcRenderer.invoke('read-ingredient-file', ingredientName);
 
             // Compute ingredient details
             let ingredientKcal = ingredientData.kcal * quantityGrams / 100;
@@ -284,7 +272,7 @@ ipcRenderer.on('read-recipe-file-response', async (event, data) => {
             newRow.classList.add('ingredient-row'); // to distinguish from the sum row
             newRow.innerHTML = `
                 <td>${ingredientName}</td>
-                <td>
+                <td class="left">
                     <input type="number" id="gramsInput" value="${quantityGrams}" class="numberInput" step="0.1"> g
                     ${ingredientData.unitWeight ? `
                     <div style="display: inline;">
@@ -305,7 +293,7 @@ ipcRenderer.on('read-recipe-file-response', async (event, data) => {
                 <td class="center">${ingredientSalt.toFixed(2)}</td>
                 <td class="center">${ingredientChol.toFixed(0)}</td>
                 <td class="center">${ingredientCost.toFixed(2)}</td>
-                <td><button class="removeIngredient">x</button></td>
+                <td><button class="removeIngredient deleteAddButton">x</button></td>
             `;
             dynamicTable.appendChild(newRow);
 
@@ -327,7 +315,7 @@ ipcRenderer.on('read-recipe-file-response', async (event, data) => {
             // Add event listener to the remove button
             newRow.querySelector('.removeIngredient').addEventListener('click', function() {
                 newRow.remove();
-                readIngredientsFromTableAndUpdateRecipe();
+                createOrUpdateRecipe();
             });
 
             // Add event listener to change ingredient name color on button hover
@@ -349,7 +337,7 @@ ipcRenderer.on('read-recipe-file-response', async (event, data) => {
                             unitInput.value = units.toFixed(2);
                         }
                     }
-                    readIngredientsFromTableAndUpdateRecipe();
+                    createOrUpdateRecipe();
 
                     // Update the originalGrams variable with the new value
                     gramsBeforeModification = grams;
@@ -366,7 +354,7 @@ ipcRenderer.on('read-recipe-file-response', async (event, data) => {
                             const grams = units * ingredientData.unitWeight;
                             newRow.querySelector('#gramsInput').value = grams.toFixed(2);
                         }
-                        readIngredientsFromTableAndUpdateRecipe();
+                        createOrUpdateRecipe();
 
                         // Update the originalGrams variable with the new value
                         gramsBeforeModification = parseFloat(newRow.querySelector('#gramsInput').value);
@@ -431,118 +419,70 @@ ipcRenderer.on('read-recipe-file-response', async (event, data) => {
                     updateRowDetails(newRow, ingredientData, gramsBeforeModification);
                 });
             }
-
-
-
         }
-
-        // Create a new row for the sum of values
-        const newRow = document.createElement('tr');
-        newRow.innerHTML = `
-            <td></td>
-            <td></td>
-            <td></td>
-            <td class="center sumRow">${kcalSum.toFixed(0)}</td>
-            <td class="center sumRow">${proteinSum.toFixed(0)}</td>
-            <td class="center sumRow">${fiberSum.toFixed(0)}</td>
-            <td class="center sumRow">${fatSum.toFixed(0)}</td>
-            <td class="center sumRow">${saturatedSum.toFixed(0)}</td>
-            <td class="center sumRow">${carbSum.toFixed(0)}</td>
-            <td class="center sumRow">${sugarSum.toFixed(0)}</td>
-            <td class="center sumRow">${saltSum.toFixed(2)}</td>
-            <td class="center sumRow">${cholSum.toFixed(0)}</td>
-            <td class="center sumRow">${costSum.toFixed(2)}</td>
-            <td></td>
-        `;
-        dynamicTable.appendChild(newRow);
-
-        // Calculate percentages
-        const proteinPercentage = ((proteinSum * 4) / kcalSum) * 100;
-        const fatPercentage = ((fatSum * 9) / kcalSum) * 100;
-        const carbPercentage = ((carbSum * 4) / kcalSum) * 100;
-        const sugarPercentage = ((sugarSum * 4) / kcalSum) * 100;
-
-        // Create a new row for the percentage of kcal
-        const percentageRow = document.createElement('tr');
-        percentageRow.innerHTML = `
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td class="center sumRow">${proteinPercentage.toFixed(0)}%</td>
-            <td></td>
-            <td class="center sumRow">${fatPercentage.toFixed(0)}%</td>
-            <td></td>
-            <td class="center sumRow">${carbPercentage.toFixed(0)}%</td>
-            <td class="center sumRow">${sugarPercentage.toFixed(0)}%</td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-        `;
-        dynamicTable.appendChild(percentageRow);
-
-    } else {
-        // Show the suggestion box if the recipe does not exist
-        suggestionBoxRecipe.style.display = 'block';
-        dynamicTable.innerHTML = '';
-        preparationBox.value = '';
     }
-});
+}
+
 
 // Read table, update the recipe file, update the shown table
-async function readIngredientsFromTableAndUpdateRecipe() {
+async function createOrUpdateRecipe() {
+    
+
+    const recipeName = recipeNameInput.value.trim();
+    const preparationText = preparationBox.value.trim();
+
+    // Populate ingredients and quantities
     const rows = dynamicTable.querySelectorAll('tr.ingredient-row');
     const ingredientsArray = [];
     const quantitiesArray = [];
-
     for (let i = 0; i < rows.length; i++) {
         const cells = rows[i].getElementsByTagName('td');
         const ingredientName = cells[0].textContent;
         const quantityGrams = parseFloat(cells[1].getElementsByTagName('input')[0].value);
-
         ingredientsArray.push(ingredientName);
         quantitiesArray.push(quantityGrams);
     }
 
-    const recipeName = recipeNameInput.value.trim();
-    ipcRenderer.send('update-recipe-ingredients', { recipeName, ingredientsArray, quantitiesArray });
+    const updatedRecipe = { recipeName, ingredientsArray, quantitiesArray, preparationText };
 
-    await new Promise((resolve) => {
-        ipcRenderer.once('update-recipe-ingredients-response', (response, message) => {
-            if (message === 'success') {
-                messageBoxUpdate(messageBoxDiv,'Recipe updated!', true);
-            } 
-            else if (message === 'failure') {
-                messageBoxUpdate(messageBoxDiv,'Failed to update recipe!', false);
-            }
-            resolve('resolved');
-        });
-    });
+    // Update or create recipe file
+    let resultOfUpdate = recipeNutritionalValue = await ipcRenderer.invoke('update-or-create-recipe', updatedRecipe);
 
-    ipcRenderer.send('read-recipe-file', recipeName);
+    switch (resultOfUpdate) {
+        case 'file-created':
+            messageBoxUpdate(messageBoxDiv,'Recipe created!', true);
+            recipeNutritionalValue = await ipcRenderer.invoke('read-recipe-file', recipeName);
+            renderRecipeTable();
+            break;
+        
+        case 'file-creation-failure':
+            messageBoxUpdate(messageBoxDiv,'Failed to create recipe!', false);
+            break;
+
+        case 'file-updated':
+            messageBoxUpdate(messageBoxDiv,'Recipe updated!', true);
+            recipeNutritionalValue = await ipcRenderer.invoke('read-recipe-file', recipeName);
+            renderRecipeTable();
+            break;
+
+        case 'file-update-failure':
+            messageBoxUpdate(messageBoxDiv,'Failed to update recipe!', false);
+            break;
+        
+        case 'failure':
+            messageBoxUpdate(messageBoxDiv,'Failed!', false);
+            break;
+    }
 }
 
-
-function getIngredientData(ingredientName) {
-    return new Promise((resolve, reject) => {
-         ipcRenderer.once('read-ingredient-file-response', (event, data) => {
-            if (data) {
-                resolve(data);
-            } else {
-                reject('Failed to read ingredient file');
-            }
-        }); 
-        ipcRenderer.send('read-ingredient-file', ingredientName);
-    });
-}
-
+// Update ingredient to add with nutritional values
 quantityGramsInput.addEventListener('input', function () {
+    const unitWeight = ingredientToAdd_details.unitWeight || 0;
     if (unitWeight > 0) {
         const grams = parseFloat(this.value);
         if (!isNaN(grams)) {
             const units = grams / unitWeight;
-            quantityUnitInput.value = units.toFixed(1);
+            quantityUnitInput.value = units.toFixed(2);
         } else {
             quantityUnitInput.value = '';
         }
@@ -550,8 +490,21 @@ quantityGramsInput.addEventListener('input', function () {
     updateIngredientDetails();
 });
 
+quantityGramsInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+        addIngredientButton.click();
+    }
+});
+quantityUnitInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+        addIngredientButton.click();
+    }
+});
+
+
 quantityUnitInput.addEventListener('input', function () {
-    if (unitWeight > 0) {
+    const unitWeight = ingredientToAdd_details.unitWeight || 0;
+    if (typeof unitWeight !== 'undefined' && unitWeight > 0) {
         const units = parseFloat(this.value);
         if (!isNaN(units)) {
             const grams = units * unitWeight;
@@ -565,105 +518,74 @@ quantityUnitInput.addEventListener('input', function () {
 
 function updateIngredientDetails() {
     const grams = parseFloat(quantityGramsInput.value);
-    if (!isNaN(grams) && ingredientData) {
-        ingredientDetails.type.textContent = ingredientData.type || '';
-        ingredientDetails.kcal.textContent = ingredientData.kcal ? `${(ingredientData.kcal * grams / 100).toFixed(0)}` : '';
-        ingredientDetails.protein.textContent = ingredientData.protein ? `${(ingredientData.protein * grams / 100).toFixed(1)}` : '';
-        ingredientDetails.fiber.textContent = ingredientData.fiber ? `${(ingredientData.fiber * grams / 100).toFixed(1)}` : '';
-        ingredientDetails.fat.textContent = ingredientData.fat ? `${(ingredientData.fat * grams / 100).toFixed(1)}` : '';
-        ingredientDetails.saturated.textContent = ingredientData.saturated ? `${(ingredientData.saturated * grams / 100).toFixed(1)}` : '';
-        ingredientDetails.carb.textContent = ingredientData.carb ? `${(ingredientData.carb * grams / 100).toFixed(1)}` : '';
-        ingredientDetails.sugar.textContent = ingredientData.sugar ? `${(ingredientData.sugar * grams / 100).toFixed(1)}` : '';
-        ingredientDetails.salt.textContent = ingredientData.salt ? `${(ingredientData.salt * grams / 100).toFixed(2)}` : '';
-        ingredientDetails.chol.textContent = ingredientData.chol ? `${(ingredientData.chol * grams / 100).toFixed(0)}` : '';
+    const ingredient = ingredientToAdd_details;
+    if (!isNaN(grams) && ingredient) {
+        suggestedIngredientDetails.type.textContent = ingredient.type || '';
+        suggestedIngredientDetails.kcal.textContent = ingredient.kcal ? `${(ingredient.kcal * grams / 100).toFixed(0)}` : '';
+        suggestedIngredientDetails.protein.textContent = ingredient.protein ? `${(ingredient.protein * grams / 100).toFixed(1)}` : '';
+        suggestedIngredientDetails.fiber.textContent = ingredient.fiber ? `${(ingredient.fiber * grams / 100).toFixed(1)}` : '';
+        suggestedIngredientDetails.fat.textContent = ingredient.fat ? `${(ingredient.fat * grams / 100).toFixed(1)}` : '';
+        suggestedIngredientDetails.saturated.textContent = ingredient.saturated ? `${(ingredient.saturated * grams / 100).toFixed(1)}` : '';
+        suggestedIngredientDetails.carb.textContent = ingredient.carb ? `${(ingredient.carb * grams / 100).toFixed(1)}` : '';
+        suggestedIngredientDetails.sugar.textContent = ingredient.sugar ? `${(ingredient.sugar * grams / 100).toFixed(1)}` : '';
+        suggestedIngredientDetails.salt.textContent = ingredient.salt ? `${(ingredient.salt * grams / 100).toFixed(2)}` : '';
+        suggestedIngredientDetails.chol.textContent = ingredient.chol ? `${(ingredient.chol * grams / 100).toFixed(0)}` : '';
         if (unitWeight > 0 && !isNaN(parseFloat(quantityUnitInput.value))) {
             const units = parseFloat(quantityUnitInput.value);
-            ingredientDetails.cost.textContent = ingredientData.cost ? `${(ingredientData.cost * units).toFixed(2)}` : '';
+            suggestedIngredientDetails.cost.textContent = ingredient.cost ? `${(ingredient.cost * units).toFixed(2)}` : '';
         } else {
-            ingredientDetails.cost.textContent = ingredientData.cost ? `${(ingredientData.cost * grams / 100).toFixed(2)}` : '';
+            suggestedIngredientDetails.cost.textContent = ingredient.cost ? `${(ingredient.cost * grams / 100).toFixed(2)}` : '';
         }
     }
 }
 
 function clearSuggestedIngredientRow() {
-    ingredientDetails.type.textContent = '';
-    ingredientDetails.kcal.textContent = '';
-    ingredientDetails.protein.textContent = '';
-    ingredientDetails.fiber.textContent = '';
-    ingredientDetails.fat.textContent = '';
-    ingredientDetails.saturated.textContent = '';
-    ingredientDetails.carb.textContent = '';
-    ingredientDetails.sugar.textContent = '';
-    ingredientDetails.salt.textContent = '';
-    ingredientDetails.chol.textContent = '';
-    ingredientDetails.cost.textContent = '';
+    ingredientNameInput.value = '';
+    suggestedIngredientDetails.type.textContent = '';
+    suggestedIngredientDetails.kcal.textContent = '';
+    suggestedIngredientDetails.protein.textContent = '';
+    suggestedIngredientDetails.fiber.textContent = '';
+    suggestedIngredientDetails.fat.textContent = '';
+    suggestedIngredientDetails.saturated.textContent = '';
+    suggestedIngredientDetails.carb.textContent = '';
+    suggestedIngredientDetails.sugar.textContent = '';
+    suggestedIngredientDetails.salt.textContent = '';
+    suggestedIngredientDetails.chol.textContent = '';
+    suggestedIngredientDetails.cost.textContent = '';
     tdQuantityInput.style.display = 'none';
     unitAlternativeSpan.style.display = 'none';
     addIngredientButton.style.display = 'none';
+    addIngredientButton.className = 'deleteAddButton';
+
     unitWeight = 0;
 }
 
 document.getElementById('addIngredientButton').addEventListener('click', async function () {
     const ingredientName = ingredientNameInput.value.trim();
-    const quantity = parseFloat(quantityGramsInput.value);
+    const ingredientQuantity = parseFloat(quantityGramsInput.value);
     const recipeName = recipeNameInput.value.trim();
-    const preparationText = preparationBox.value.trim();
     
-    // Empty recipe name
     if (recipeName === '') {
         messageBoxUpdate(messageBoxDiv,'Recipe name cannot be empty!', false);
         return;
     }
-    // Empty ingredient name or invalid quantity
-    else if (ingredientName === '' || isNaN(quantity) || quantity <= 0) {
+    else if (ingredientName === '' || isNaN(ingredientQuantity) || ingredientQuantity <= 0) {
         messageBoxUpdate(messageBoxDiv,'Ingredient name and quantity cannot be empty!', false);
         return;
     }
 
-    // Add the ingredient to the recipe
-    // This will check if the ingredient is already in the recipe
-    ipcRenderer.send('add-ingredient-to-recipe', { recipeName, preparationText, ingredientName, quantity });
-    
+    const addIngredientResult = await ipcRenderer.invoke('add-ingredient-to-recipe', { recipeName, ingredientName, ingredientQuantity });
 
-    let ingredientAdded = false;
-
-    await new Promise((resolve) => {
-        ipcRenderer.once('add-ingredient-to-recipe-response', (response, message) => {
-            if (message === 'success') {
-                ingredientAdded = true;
-                messageBoxUpdate(messageBoxDiv,'Ingredient added to recipe!', true);
-            } 
-            if (message === 'Ingredient already exists') {
-                messageBoxUpdate(messageBoxDiv,'Ingredient is already present in the recipe!', false);
-            }
-            else if (message === 'failure') {
-                messageBoxUpdate(messageBoxDiv,'Failed to add ingredient to recipe!', false);
-            }
-            resolve('resolved');
-        });
-    });
-
-
-    if (ingredientAdded) {
-        ingredientNameInput.value = '';
-        quantityGramsInput.value = '';
-        quantityUnitInput.value = '';
-        unitNameSpan.textContent = '';
-        unitAlternativeSpan.style.display = 'none';
-        ingredientDetails.type.textContent = '';
-        ingredientDetails.kcal.textContent = '';
-        ingredientDetails.protein.textContent = '';
-        ingredientDetails.fiber.textContent = '';
-        ingredientDetails.fat.textContent = '';
-        ingredientDetails.saturated.textContent = '';
-        ingredientDetails.carb.textContent = '';
-        ingredientDetails.sugar.textContent = '';
-        ingredientDetails.salt.textContent = '';
-        ingredientDetails.chol.textContent = '';
-        ingredientDetails.cost.textContent = '';
-
-        ipcRenderer.send('read-recipe-file', recipeName);
+    if (addIngredientResult === 'success') {
+        messageBoxUpdate(messageBoxDiv,'Ingredient added to recipe!', true);
+        clearSuggestedIngredientRow();
+        recipeNutritionalValue = await ipcRenderer.invoke('read-recipe-file', recipeName);
+        renderRecipeTable();
+    } 
+    else if (addIngredientResult === 'ingredient-already-in-recipe') {
+        messageBoxUpdate(messageBoxDiv,'Ingredient is already present in the recipe!', false);
+    }
+    else if (addIngredientResult === 'failure') {
+        messageBoxUpdate(messageBoxDiv,'Failed to add ingredient to recipe!', false);
     }
 });
-
-

@@ -188,8 +188,13 @@ async function readJsonFile(filePath) {
         return JSON.parse(data);
     } catch (err) {
         console.error('Failed to read file:', err);
-        return null;
-    }
+        if(err.code === 'ENOENT') {
+            return 'file-not-found';
+        }
+        else{
+            return 'failure';
+        }
+    }   
 }
 
 /**** DELETE FILES   */
@@ -280,10 +285,7 @@ ipcMain.handle('update-ingredient-file', async (event, ingredientName, fileConte
     return result;
 });
 
-ipcMain.handle('update-recipe-file', async (event, recipeName, fileContent) => {
-    const filePath = path.join(__dirname, '../../Pantry/Recipes', `${recipeName}.json`);
-    return updateFile(filePath, fileContent);
-});
+
 
 async function updateFile(filePath, fileContent) {
     if (typeof fileContent !== 'string') {
@@ -324,122 +326,63 @@ ipcMain.handle('get-ingredient-types', async () => {
 
 
 // IPC listener to create or update recipe file
-ipcMain.on('add-ingredient-to-recipe', (event, recipeAndIngredients) => {
-    const { recipeName, preparationText, ingredientName, quantity } = recipeAndIngredients;
+ipcMain.handle('add-ingredient-to-recipe', async (event, recipeAndIngredient) => {
+    const { recipeName, ingredientName, ingredientQuantity } = recipeAndIngredient;
     const filePath = path.join(__dirname, '../../Pantry/Recipes', `${recipeName}.json`);
-    fs.readFile(filePath, 'utf8', (err, data) => {
-        let recipeData;
+    
+    let readingResult = await readJsonFile(filePath);
+    let recipeData = {};
 
-        if (err) {
-            if (err.code === 'ENOENT') {
-                // File does not exist, create a new one
-                recipeData = {
-                    ingredientsArray: [],
-                    quantitiesArray: [],
-                    preparation: "",
-                };
-            } else {
-                console.error('Failed to read file:', err);
-                event.reply('add-ingredient-to-recipe-response', 'failure');
-                return;
-            }
-        } else {
-            // File exists, parse the existing data
-            recipeData = JSON.parse(data);
-        }
+    // 'file-not-found' error is not possible here
+    switch(readingResult) {
+        case 'failure':
+            console.error('Failed to read file:', err);
+            return 'file-read-failure';
+        default:
+            recipeData = readingResult;
+    }
 
-        // Check if the ingredient is already in the recipe
-        if (recipeData.ingredientsArray.includes(ingredientName)) {
-            event.reply('add-ingredient-to-recipe-response', 'Ingredient already exists');
-            return;
-        }
+    // Check if the ingredient is already in the recipe
+    if (recipeData.ingredientsArray.includes(ingredientName)) {
+        return 'ingredient-already-in-recipe';
+    }
 
-        // Add the ingredient and quantity to the arrays
-        recipeData.ingredientsArray.push(ingredientName);
-        recipeData.quantitiesArray.push(quantity);
-        recipeData.preparation = preparationText;
+    // Update the recipe
+    recipeData.ingredientsArray.push(ingredientName);
+    recipeData.quantitiesArray.push(ingredientQuantity);
 
-        // Write the updated data back to the file
-        fs.writeFile(filePath, JSON.stringify(recipeData, null, 2), (err) => {
-            if (err) {
-                console.error('Failed to write file:', err);
-                event.reply('add-ingredient-to-recipe-response', 'failure');
-            } else {
-                console.log('File updated successfully');
-                event.reply('add-ingredient-to-recipe-response', 'success');
-            }
-        });
-    });
+    let overwriteResult = await updateFile(filePath, recipeData);
+
+    return overwriteResult
 });
 
-ipcMain.on('update-recipe-ingredients', (event, recipeAndIngredients) => {
-    const { recipeName, ingredientsArray, quantitiesArray } = recipeAndIngredients;
-    const filePath = path.join(__dirname, '../../Pantry/Recipes', `${recipeName}.json`);
-    
-    fs.readFile(filePath, 'utf8', (err, data) => {
-        if (err) {
+ipcMain.handle('update-or-create-recipe', async (event, updatedRecipeJSON) => {
+    const filePath = path.join(__dirname, '../../Pantry/Recipes', `${updatedRecipeJSON.recipeName}.json`);
+    const fileContent = updatedRecipeJSON;
+
+    let readingResult = await readJsonFile(filePath);
+    switch (readingResult) {
+        case 'failure':
             console.error('Failed to read file:', err);
-            event.reply('update-recipe-ingredients-response', 'failure');
-            return;
-        }
+            return 'failure';
 
-        let recipeData = JSON.parse(data);
-        recipeData.ingredientsArray = ingredientsArray;
-        recipeData.quantitiesArray = quantitiesArray;
-
-        fs.writeFile(filePath, JSON.stringify(recipeData, null, 2), (err) => {
-            if (err) {
-                console.error('Failed to write file:', err);
-                event.reply('update-recipe-ingredients-response', 'failure');
-            } else {
-                console.log('File updated successfully');
-                event.reply('update-recipe-ingredients-response', 'success');
+        case 'file-not-found': // File does not exist -> create it
+            let createResult = await createFile(filePath, fileContent);
+            if (createResult === 'success') {
+                return 'file-created';
             }
-        });
-    });
-});
+            else {
+                return 'file-creation-failure';
+            }
 
-ipcMain.on('update-recipe-preparation', (event, recipeAndpreparation) => {
-    const { recipeName, preparationText } = recipeAndpreparation;
-    const filePath = path.join(__dirname, '../../Pantry/Recipes', `${recipeName}.json`);
-    
-    fs.readFile(filePath, 'utf8', (err, data) => {
-        if (err.code === 'ENOENT') {
-            // File does not exist, create a new one
-            recipeData = {
-                ingredientsArray: [],
-                quantitiesArray: [],
-                preparation: preparationText,
-            };
-            fs.writeFile(filePath, JSON.stringify(recipeData, null, 2), (err) => {
-                if (err) {
-                    console.error('Failed to write file:', err);
-                    event.reply('update-recipe-preparation-response', 'failure');
-                } else {
-                    event.reply('update-recipe-preparation-response', 'created');
-                }
-            });
-        }
-        else if (err) {
-            console.error('Failed to read file:', err);
-            event.reply('update-recipe-preparation-response', 'failure');
-            return;
-        }
-        else {
-            // File exists, update recipe
-            let recipeData = JSON.parse(data);
-            recipeData.preparation = preparationText;
-    
-            fs.writeFile(filePath, JSON.stringify(recipeData, null, 2), (err) => {
-                if (err) {
-                    console.error('Failed to write file:', err);
-                    event.reply('update-recipe-preparation-response', 'failure');
-                } else {
-                    console.log('File updated successfully');
-                    event.reply('update-recipe-preparation-response', 'update');
-                }
-            });
-        }
-
-    });
+        default:    // File exists -> update it
+            let updateResult = await updateFile(filePath, fileContent);
+            // 'file-not-found' error is not possible here
+            if (updateResult === 'success') {
+                return 'file-updated';
+            }
+            else {
+                return 'file-update-failure';
+            }
+    }
 });

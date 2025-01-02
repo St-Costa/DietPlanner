@@ -17,9 +17,6 @@
     background-color: #f0f0f0;
 }
 
-table {
-    margin: auto;
-}
 
 
 #ingredientName{
@@ -51,11 +48,6 @@ textarea {
     width: 10%;
 }
 
-.number {
-    width: 3%;
-    white-space: nowrap;
-    text-align: center;
-}
 
 /* END */
 
@@ -74,10 +66,6 @@ textarea {
     -ms-user-select: none; /* For Internet Explorer/Edge */
 }
 
-th.ordered:hover {
-    cursor: pointer;
-}
-
 
 
 /* Remove top and bottom borders for table rows */
@@ -85,16 +73,6 @@ th.ordered:hover {
     border-top: none;
     border-bottom: none;
 }
-
-/* Remove the first and last vertical lines */
-.table th:first-child, .table td:first-child {
-    border-left: none;
-}
-
-.table th:last-child, .table td:last-child {
-    border-right: none;
-}
-
 
 /* Remove arrows from number input */
 input[type="number"]::-webkit-outer-spin-button,
@@ -107,19 +85,8 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-
 .thButton {
     width: 1%;
-}
-
-button {
-    font-size: 20px; 
-    padding: 1px 5px !important;  /* Spazio interno (10px sopra e sotto, 20px ai lati) */
-    margin: 1px;  
-}
-
-.deleteButton {
-    padding: 1px 5px !important;
 }
 
 /* Starting css modified in js */
