@@ -331,10 +331,15 @@ async function renderRecipeTable () {
                 if (e.key === 'Enter') {
                     const grams = parseFloat(this.value);
                     if (!isNaN(grams)) {
-                        const units = grams / ingredientData.unitWeight;
-                        const unitInput = newRow.querySelector('#unitInput');
-                        if (unitInput) {
-                            unitInput.value = units.toFixed(2);
+                        if (grams === 0) {
+                            newRow.querySelector('.removeIngredient').click();
+                            return;
+                        } else {
+                            const units = grams / ingredientData.unitWeight;
+                            const unitInput = newRow.querySelector('#unitInput');
+                            if (unitInput) {
+                                unitInput.value = units.toFixed(2);
+                            }
                         }
                     }
                     createOrUpdateRecipe();
@@ -353,6 +358,10 @@ async function renderRecipeTable () {
                         if (!isNaN(units)) {
                             const grams = units * ingredientData.unitWeight;
                             newRow.querySelector('#gramsInput').value = grams.toFixed(2);
+                            if (grams === 0) {
+                                newRow.querySelector('.removeIngredient').click();
+                                return;
+                            }
                         }
                         createOrUpdateRecipe();
 
@@ -365,15 +374,15 @@ async function renderRecipeTable () {
             // Function to update ingredient details only in the row (not in recipe)
             function updateRowDetails(row, ingredientData, quantityGrams) {
                 const cells = row.getElementsByTagName('td');
-                cells[3].textContent = (ingredientData.kcal * quantityGrams / 100).toFixed(2);
-                cells[4].textContent = (ingredientData.protein * quantityGrams / 100).toFixed(2);
-                cells[5].textContent = (ingredientData.fiber * quantityGrams / 100).toFixed(2);
-                cells[6].textContent = (ingredientData.fat * quantityGrams / 100).toFixed(2);
-                cells[7].textContent = (ingredientData.saturated * quantityGrams / 100).toFixed(2);
-                cells[8].textContent = (ingredientData.carb * quantityGrams / 100).toFixed(2);
-                cells[9].textContent = (ingredientData.sugar * quantityGrams / 100).toFixed(2);
+                cells[3].textContent = (ingredientData.kcal * quantityGrams / 100).toFixed(0);
+                cells[4].textContent = (ingredientData.protein * quantityGrams / 100).toFixed(0);
+                cells[5].textContent = (ingredientData.fiber * quantityGrams / 100).toFixed(0);
+                cells[6].textContent = (ingredientData.fat * quantityGrams / 100).toFixed(0);
+                cells[7].textContent = (ingredientData.saturated * quantityGrams / 100).toFixed(0);
+                cells[8].textContent = (ingredientData.carb * quantityGrams / 100).toFixed(0);
+                cells[9].textContent = (ingredientData.sugar * quantityGrams / 100).toFixed(0);
                 cells[10].textContent = (ingredientData.salt * quantityGrams / 100).toFixed(2);
-                cells[11].textContent = (ingredientData.chol * quantityGrams / 100).toFixed(2);
+                cells[11].textContent = (ingredientData.chol * quantityGrams / 100).toFixed(0);
                 cells[12].textContent = ingredientData.unitWeight ? (ingredientData.cost * (quantityGrams / ingredientData.unitWeight)).toFixed(2) : (ingredientData.cost * quantityGrams / 100).toFixed(2);
             }
 

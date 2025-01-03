@@ -96,6 +96,27 @@ ipcMain.on('open-add-recipe-window', (event, arg) => {
     addIngredientView.webContents.openDevTools();
 });
 
+// Modify actual pantry
+ipcMain.on('open-pantry-window', (event, arg) => {
+    let pantryView = new BrowserWindow({
+        width: 1500,
+        height: 760,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+            enableRemoteModule: true
+        }
+    });
+
+    pantryView.loadURL(url.format({
+        pathname: path.join(__dirname, '../views/pantry.html'),
+        protocol: 'file:',
+        slashes: true
+    }));
+
+    pantryView.webContents.openDevTools();
+});
+
 // Open ingriedient list window
 ipcMain.on('open-ingredient-list-window', (event, arg) => {
     let ingredientListView = new BrowserWindow({
@@ -353,7 +374,7 @@ ipcMain.handle('add-ingredient-to-recipe', async (event, recipeAndIngredient) =>
 
     let overwriteResult = await updateFile(filePath, recipeData);
 
-    return overwriteResult
+    return overwriteResult;
 });
 
 ipcMain.handle('update-or-create-recipe', async (event, updatedRecipeJSON) => {
@@ -375,6 +396,79 @@ ipcMain.handle('update-or-create-recipe', async (event, updatedRecipeJSON) => {
                 return 'file-creation-failure';
             }
 
+        default:    // File exists -> update it
+            let updateResult = await updateFile(filePath, fileContent);
+            // 'file-not-found' error is not possible here
+            if (updateResult === 'success') {
+                return 'file-updated';
+            }
+            else {
+                return 'file-update-failure';
+            }
+    }
+});
+
+/************************
+ * PANTRY
+ ***********************/
+
+// IPC listener to create or update pantry file
+ipcMain.handle('add-ingredient-to-pantry', async (event, ingredient) => {
+    const { ingredientName, ingredientQuantity } = ingredient;
+    const filePath = path.join(__dirname, '../../Pantry', `Pantry.json`);
+    
+    let readingResult = await readJsonFile(filePath);
+    let pantryData = {};
+
+    switch(readingResult) {
+        case 'failure':
+            console.error('Failed to read file:', err);
+            return 'file-read-failure';
+        case 'file-not-found':
+            fileContent = {
+                ingredientsArray: [],
+                quantitiesArray: []
+            };
+            pantryData = fileContent;
+            let resultCreation = await createFile(filePath, fileContent);     
+            if (resultCreation === 'failure'){
+                return 'file-creation-failure';
+            }
+            break;   
+        default:
+            pantryData = readingResult;
+    }
+
+    // Check if the ingredient is already in the recipe
+    if (pantryData.ingredientsArray.includes(ingredientName)) {
+        return 'ingredient-already-in-pantry';
+    }
+
+    // Update the recipe
+    pantryData.ingredientsArray.push(ingredientName);
+    pantryData.quantitiesArray.push(ingredientQuantity);
+
+    let overwriteResult = await updateFile(filePath, pantryData);
+
+    return overwriteResult;
+});
+
+// IPC listener to read recipe file content
+ipcMain.handle('read-pantry-file', async (event) => {
+    const filePath = path.join(__dirname, '../../Pantry', `Pantry.json`);
+    return readJsonFile(filePath);
+});
+
+ipcMain.handle('update-pantry', async (event, updatedPantryJSON) => {
+    const filePath = path.join(__dirname, '../../Pantry', `Pantry.json`);
+    const fileContent = updatedPantryJSON;
+
+    let readingResult = await readJsonFile(filePath);
+    // The pantry file must exist
+    switch (readingResult) {
+        case 'failure':
+            console.error('Failed to read file:', err);
+            return 'failure';
         default:    // File exists -> update it
             let updateResult = await updateFile(filePath, fileContent);
             // 'file-not-found' error is not possible here

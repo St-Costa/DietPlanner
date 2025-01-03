@@ -23,3 +23,9 @@ const recipeListBtn = document.getElementById('recipeListButton');
 recipeListBtn.addEventListener('click', function (event) {
     ipcRenderer.send('open-recipe-list-window');
 });
+
+const pantryBtn = document.getElementById('modifyPantry');
+
+pantryBtn.addEventListener('click', function (event) {
+    ipcRenderer.send('open-pantry-window');
+});

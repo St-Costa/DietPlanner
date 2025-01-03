@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/basic.css">
+    <link rel="stylesheet" href="../css/addRecipe.css">
+    <link rel="stylesheet" href="../css/button.css">
+    <link rel="stylesheet" href="../css/table.css">
+    <link rel="stylesheet" href="../css/messageBox.css">
+    <title>Add Recipe</title>
+</head>
+<body>
+
+    <h1>Pantry</h1>
+
+    <br>
+    <div class="explainingBox center">
+        This is the pantry. Here you can see the ingredients you have in stock. 
+        <br>
+        The ingredients are used to create the shopping list.
+        <br>
+        KEEP IT UPDATED!!!
+    </div>
+
+    <br>
+    <div id="messageBox" class="center messageBox"></div>
+    <br>
+
+
+    <table id="ingredientTable" class="table_border">
+        <thead>
+            <tr>
+                <th id="nameHeader" class="ordered">Ingredient</th>
+                <th id="quantityHeader">Quantity</th>
+                <th class="thButton"></th>
+            </tr>
+        </thead>
+        <tbody id="dynamicTable">
+            <!-- Dynamic rows will be added here -->
+        </tbody>
+        
+        <!-- Ingredient selection -->
+        <tr>
+            <td colspan="14" style="padding-top: 20px;"></td>
+        </tr>
+        <tr>
+            <td class="bottom left">Add ingredient:</td>
+            <td colspan="13"></td>
+        </tr>
+        <tr>
+            <td><input type="text" id="ingredientName"><div id="suggestionBox"></div></td>
+            <td id="tdQuantityInput" class="left">
+                <input type="number" id="quantityGrams" class="numberInput" step="0.1"> g
+                <div id="unitAlternative" style="display: inline;">
+                    ||
+                    <input class="numberInput" type="number" id="quantityUnit" placeholder="[0,∞]" min="0" step="0.01" oninput="validity.valid||(value='');"> 
+                    of 
+                    <span id="unitName">(unit name)</span>
+                </div>
+            </td>
+            <td><button id="addIngredientButton">+</button></td>
+        </tr>
+    </table>
+
+    <script>
+        require('../js/pantry.js');
+    </script>
+</body>
+</html>
+
