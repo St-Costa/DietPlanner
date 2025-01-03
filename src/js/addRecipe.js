@@ -49,9 +49,9 @@ ingredientNameInput.addEventListener('input', async function () {
     let ingredientsNameList = await ipcRenderer.invoke('get-ingredient-names');
     const input = this.value.toLowerCase();
     const suggestions = ingredientsNameList.filter(name => name.toLowerCase().includes(input));
-    if (!suggestions.includes(input)) {
+/*     if (!suggestions.includes(input)) {
         clearSuggestedIngredientRow();
-    }
+    } */
     showSuggestions(suggestions, suggestionBox, ingredientNameInput);
 });
 

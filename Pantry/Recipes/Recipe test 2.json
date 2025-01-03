@@ -1,14 +1,12 @@
 {
   "recipeName": "Recipe test 2",
   "ingredientsArray": [
-    "Lemon",
-    "Chicken breast",
-    "Water"
+    "Kiwi",
+    "Kefir"
   ],
   "quantitiesArray": [
-    111,
-    600,
-    250
+    100,
+    100
   ],
-  "preparationText": "prova di recipe test"
+  "preparationText": "prova di recipe test 2"
 }

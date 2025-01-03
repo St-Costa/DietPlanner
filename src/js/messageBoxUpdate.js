@@ -18,7 +18,7 @@ module.exports = {
             messageBoxDiv.textContent = '';
             messageBoxDiv.style.color = "";
             messageBoxDiv.style.border = '1px none';
-        }, 3000);
+        }, 1000);
     }
     
 }
