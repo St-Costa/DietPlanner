@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/basic.css">
+    <link rel="stylesheet" href="../css/table.css">
+    <link rel="stylesheet" href="../css/button.css">
+    <link rel="stylesheet" href="../css/messageBox.css">
+    <title>Grocery List</title>
+</head>
+<body>
+    
+    <h1>Grocery List</h1>
+    <h2 id="listName"></h2>
+
+    <br>
+    <div class="explainingBox center" id="explainBox">(Explanation of what user can do) Also: pantry is already considered here...</div>
+    <br>
+
+    <table id="itemTable" class="table_border">
+        <thead>
+            <tr>
+                <th>Ingredient</th>
+                <th>Product name</th>
+                <th>Quantity</th>
+                <th>Expected cost</th>
+            </tr>
+        </thead>
+        <tbody id="dynamicTable">
+            <!-- Dynamic rows will be added here -->
+        </tbody>
+    </table>
+
+    <br>
+    <div id="messageBox" class="center messageBox"></div>
+    <br>
+    <div id="exportButtons" class="center"></div>
+
+    <script>
+        require('../js/groceryList.js');
+    </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "Broccolo",
+  "type": "Vegetable",
+  "kcal": "34",
+  "protein": "2.8",
+  "fiber": "2.6",
+  "fat": "0.3",
+  "saturated": "0",
+  "carb": "6.6",
+  "sugar": "0",
+  "salt": "0",
+  "chol": "0",
+  "cost": "0.38",
+  "unitWeight": "500",
+  "unitName": "SPAR Bio-broccolo"
+}

@@ -96,6 +96,32 @@ ipcMain.on('open-add-recipe-window', (event, arg) => {
     addIngredientView.webContents.openDevTools();
 });
 
+
+// Add recipe window
+ipcMain.on('open-recipe-grocery-list-window', (event, recipeName) => {
+    let recipeGroceryListView = new BrowserWindow({
+        width: 1500,
+        height: 760,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+            enableRemoteModule: true
+        }
+    });
+
+    recipeGroceryListView.loadURL(url.format({
+        pathname: path.join(__dirname, '../views/groceryList.html'),
+        protocol: 'file:',
+        slashes: true
+    }));
+
+    recipeGroceryListView.webContents.openDevTools();
+
+    recipeGroceryListView.webContents.on('did-finish-load', () => {
+        recipeGroceryListView.webContents.send('init-args', {groceryType: 'recipe',recipeName: recipeName});
+    });
+});
+
 // Modify actual pantry
 ipcMain.on('open-pantry-window', (event, arg) => {
     let pantryView = new BrowserWindow({

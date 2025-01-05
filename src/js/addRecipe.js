@@ -456,7 +456,7 @@ async function createOrUpdateRecipe() {
     const updatedRecipe = { recipeName, ingredientsArray, quantitiesArray, preparationText };
 
     // Update or create recipe file
-    let resultOfUpdate = recipeNutritionalValue = await ipcRenderer.invoke('update-or-create-recipe', updatedRecipe);
+    let resultOfUpdate = await ipcRenderer.invoke('update-or-create-recipe', updatedRecipe);
 
     switch (resultOfUpdate) {
         case 'file-created':
@@ -584,6 +584,7 @@ document.getElementById('addIngredientButton').addEventListener('click', async f
         return;
     }
 
+    await createOrUpdateRecipe();
     const addIngredientResult = await ipcRenderer.invoke('add-ingredient-to-recipe', { recipeName, ingredientName, ingredientQuantity });
 
     if (addIngredientResult === 'success') {

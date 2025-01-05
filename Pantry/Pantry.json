@@ -1,8 +1,10 @@
 {
   "ingredientsArray": [
-    "Kiwi"
+    "Broccolo",
+    "Chicken breast"
   ],
   "quantitiesArray": [
-    8
+    10,
+    10
   ]
 }

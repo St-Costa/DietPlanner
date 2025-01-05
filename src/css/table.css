@@ -69,3 +69,11 @@ table th:first-child, table td:first-child {
 table th:last-child, table td:last-child {
   border-right: none;
 }
+
+.nonSelectable {
+    /* Make the table header non-selectable */
+    user-select: none;
+    -webkit-user-select: none; /* For Safari */
+    -moz-user-select: none; /* For Firefox */
+    -ms-user-select: none; /* For Internet Explorer/Edge */
+}

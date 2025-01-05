@@ -76,7 +76,7 @@ async function computeRecipeNutritionalValues (ingredientArray, quantityArray) {
         totalNutritionalValues.sugar += ingredientData.sugar * quantity / 100;
         totalNutritionalValues.salt += ingredientData.salt * quantity / 100;
         totalNutritionalValues.chol += ingredientData.chol * quantity / 100;
-        if(ingredientData.unitWeight !== 0) {
+        if(ingredientData.unitWeight !== "") {
             totalNutritionalValues.cost += ingredientData.cost * quantity / ingredientData.unitWeight;
         }
         else {
@@ -102,7 +102,14 @@ async function renderTableRow(recipeName, recipeNutritionalValue) {
         <td>${recipeNutritionalValue.salt.toFixed(2)}</td>
         <td>${recipeNutritionalValue.chol.toFixed(0)}</td>
         <td>${recipeNutritionalValue.cost.toFixed(2)}</td>
+        <td><button class="deleteAddButton" id="openGroceryList">≡</button></td>
     `;
+
+    newRow.querySelector('#openGroceryList').addEventListener('click', function() {
+        ipcRenderer.send('open-recipe-grocery-list-window', recipeName);
+    });
+
+
 
     recipeTable.appendChild(newRow);
 }

@@ -1,12 +1,12 @@
 {
   "recipeName": "Recipe testin",
   "ingredientsArray": [
-    "Chicken breast",
-    "Lemon"
+    "Broccolo",
+    "Chicken breast"
   ],
   "quantitiesArray": [
-    1200,
-    1111
+    111,
+    100
   ],
-  "preparationText": "prova asd2"
+  "preparationText": "Testing preparation"
 }
