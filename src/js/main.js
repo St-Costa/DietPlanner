@@ -48,8 +48,8 @@ app.on('activate', () => {
 // Add ingredient window
 ipcMain.on('open-add-ingredient-window', (event, arg) => {
     let addIngredientView = new BrowserWindow({
-        width: 500,
-        height: 760,
+        width: 700,
+        height: 1000,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,

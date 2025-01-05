@@ -30,6 +30,13 @@ addIngredientBtn.addEventListener('click', function (event) {
 
 
 
+// For when I create an ingredient in the other view
+ipcRenderer.on('refresh-ingredient-list', () => {
+    console.log("Refreshing ingredients");
+    fetchAndRenderIngredients();
+});
+
+
 
 // On opening of view, fetch and render recipes
 document.addEventListener('DOMContentLoaded', fetchAndRenderIngredients);
