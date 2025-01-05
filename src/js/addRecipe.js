@@ -14,6 +14,7 @@ const preparationBox = document.getElementById('preparation');
 const dynamicTable = document.getElementById('dynamicTable');
 const addIngredientButton = document.getElementById('addIngredientButton');
 const tdQuantityInput = document.getElementById('tdQuantityInput');
+const deleteRecipeButton = document.getElementById('deleteRecipe');
 
 let ingredientToAdd_details = {};
 const suggestedIngredientDetails = {
@@ -596,5 +597,31 @@ document.getElementById('addIngredientButton').addEventListener('click', async f
     }
     else if (addIngredientResult === 'failure') {
         messageBoxUpdate(messageBoxDiv,'Failed to add ingredient to recipe!', false);
+    }
+});
+
+
+deleteRecipeButton.addEventListener('click', async function () {
+    const recipeName = recipeNameInput.value.trim();
+    if (recipeName === '') {
+        messageBoxUpdate(messageBoxDiv,'Recipe name cannot be empty!', false);
+        return;
+    }
+
+    const deleteRecipeResult = await ipcRenderer.invoke('delete-recipe', recipeName);
+
+    if (deleteRecipeResult === 'success') {
+        messageBoxUpdate(messageBoxDiv,'Recipe deleted!', true);
+        recipeNameInput.value = '';
+        preparationBox.value = '';
+        dynamicTable.innerHTML = '';
+        recipeNutritionalValue = {};
+        clearSuggestedIngredientRow();
+    } 
+    else if (deleteRecipeResult === 'file-not-found') {
+        messageBoxUpdate(messageBoxDiv,'Recipe file not found!', false);
+    }
+    else if (deleteRecipeResult === 'failure') {
+        messageBoxUpdate(messageBoxDiv,'Failed to delete recipe!', false);
     }
 });

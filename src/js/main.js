@@ -242,29 +242,30 @@ ipcMain.handle('get-recipes-using-ingredient', async (event, ingredient) => {
 
 ipcMain.handle('delete-ingredient', async (event, ingredient) => {
     const filePath = path.join(__dirname, '../../Pantry/Ingredients', `${ingredient}.json`);
-    console.log(filePath);
     let resultOfDeletion = await deleteFile(filePath);
-    
-    BrowserWindow.getAllWindows().forEach(win => {
-        win.webContents.send('refresh-ingredient-list');
-    });
 
     return resultOfDeletion;
 });
 
 ipcMain.handle('delete-recipe', async (event, recipe) => {
     const filePath = path.join(__dirname, '../../Pantry/Recipes', `${recipe}.json`);
-    return deleteFile(filePath);
+    let resultOfDeletion = deleteFile(filePath);
+
+    return resultOfDeletion;
 });
 
 async function deleteFile(filePath) {
+    if (!fs.existsSync(filePath)) {
+        console.error('File does not exist:', filePath);
+        return 'file-not-found';
+    }
     try {
         await fs.promises.unlink(filePath);
         console.log('File deleted successfully');
-        return true;
+        return 'success';
     } catch (err) {
         console.error('Failed to delete file:', err);
-        return false;
+        return 'failure';
     }
 }
 

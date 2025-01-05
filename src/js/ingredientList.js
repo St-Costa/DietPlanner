@@ -30,13 +30,6 @@ addIngredientBtn.addEventListener('click', function (event) {
 
 
 
-// Listen for the refresh-ingredient-list message
-ipcRenderer.on('refresh-ingredient-list', () => {
-    console.log("Refreshing ingredients");
-    fetchAndRenderIngredients();
-});
-
-
 
 // On opening of view, fetch and render recipes
 document.addEventListener('DOMContentLoaded', fetchAndRenderIngredients);
@@ -125,6 +118,7 @@ async function renderTableRow(ingredientData) {
         }
         else{
             const resultOfDeletion = await ipcRenderer.invoke('delete-ingredient', ingredientData.name);
+            await fetchAndRenderIngredients();
             if(resultOfDeletion){
                 messageBoxUpdate(messageBoxDiv, 'Ingredient deleted successfully', true);
             }
@@ -154,6 +148,7 @@ function deletingIngredientPrompt(ingredientName, recipeList){
     messageBoxDiv.style.color = boxColor;
     messageBoxDiv.style.border = '1px solid ' + boxColor;
     messageBoxDiv.style.fontWeight = 'bold';
+    messageBoxDiv.style.height = 'fit-content';
 
 
     messageBoxDiv.innerHTML = `
@@ -169,14 +164,19 @@ function deletingIngredientPrompt(ingredientName, recipeList){
     yesButton.textContent = 'Yes';
     yesButton.addEventListener('click', async () => {
         const resultOfDeletion = await ipcRenderer.invoke('delete-ingredient', ingredientName);
+        await fetchAndRenderIngredients();
         messageBoxDiv.textContent = '';
         messageBoxDiv.style.color = "";
         messageBoxDiv.style.border = '1px none';
-        if(resultOfDeletion){
-            messageBoxUpdate(messageBoxDiv, 'Ingredient deleted successfully', true);
+
+        if (resultOfDeletion === 'success') {
+            messageBoxUpdate(messageBoxDiv,'Ingredient deleted!', true);
+        } 
+        else if (resultOfDeletion === 'file-not-found') {
+            messageBoxUpdate(messageBoxDiv,'Ingredient file not found!', false);
         }
-        else{
-            messageBoxUpdate(messageBoxDiv, 'Failed to delete ingredient', false);
+        else if (resultOfDeletion === 'failure') {
+            messageBoxUpdate(messageBoxDiv,'Failed to delete ingredient!', false);
         }
     });
 
