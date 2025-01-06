@@ -75,6 +75,21 @@ ipcMain.on('open-add-ingredient-window', (event, arg) => {
     });
 });
 
+ipcMain.on('suggestion-clicked', (event, arg) => {
+    const {itemData, suggestionType, targetWindowId} = arg;
+
+    if(suggestionType === 'ingredient') {
+        BrowserWindow.fromId(targetWindowId).webContents.send('suggested-ingredient-clicked', itemData);   
+    }
+    
+});
+
+ipcMain.handle('get-window-id', (event) => {
+    // Get the window ID that sent the message
+    const window = BrowserWindow.fromWebContents(event.sender);
+    return window.id;
+});
+
 // Add recipe window
 ipcMain.on('open-add-recipe-window', (event, arg) => {
     let addIngredientView = new BrowserWindow({

@@ -1,5 +1,6 @@
 const { ipcRenderer } = require('electron');
 const { messageBoxUpdate } = require('./messageBoxUpdate');
+const { showSuggestions, navigateSuggestions } = require('./suggestions');
 
 const addIngredientBtn = document.getElementById('addIngredient');
 
@@ -87,11 +88,14 @@ inputs.forEach(input => input.addEventListener('input', checkInputs));
 // Autocompletion for ingredient name
 // ***
 
-ingredientNameInput.addEventListener('focus', function() {
-    showSuggestions('ingredient', suggestionBox_name, this);
+ingredientNameInput.addEventListener('focus', async function() {
+    const thisWindowId = await ipcRenderer.invoke('get-window-id');
+    showSuggestions('ingredient', suggestionBox_name, this, thisWindowId);
+    
 });
-ingredientNameInput.addEventListener('input', function() {
-    showSuggestions('ingredient', suggestionBox_name, this);
+ingredientNameInput.addEventListener('input', async function() {
+    const thisWindowId = await ipcRenderer.invoke('get-window-id');
+    showSuggestions('ingredient', suggestionBox_name, this, thisWindowId);
 });
 ingredientNameInput.addEventListener('blur', function() {
     suggestionBox_name.style.display = 'none';
@@ -101,16 +105,26 @@ ingredientNameInput.addEventListener('keydown', function (e) {
     navigateSuggestions(e, suggestionBox_name);
 });
 
+ipcRenderer.on('suggested-ingredient-clicked', (event, ingredientData) => {
+    console.log(ingredientData);
+    isUpdateMode = true;
+    addIngredientBtn.textContent = 'Update ingredient';
+    ingredientNameInput.disabled = true;
+    populateInputs(ingredientData);
+});
+
 // ***
 // Autocompletion for ingredient name
 // ***
 
 // Request ingredient types for autocompletion
-ingredientTypeInput.addEventListener('focus', function () {
-    showSuggestions('type', suggestionBox_type, this);
+ingredientTypeInput.addEventListener('focus', async function () {
+    const thisWindowId = await ipcRenderer.invoke('get-window-id');
+    showSuggestions('type', suggestionBox_type, this, thisWindowId);
 });
-ingredientTypeInput.addEventListener('input', function () {
-    showSuggestions('type', suggestionBox_type, this);
+ingredientTypeInput.addEventListener('input', async function () {
+    const thisWindowId = await ipcRenderer.invoke('get-window-id');
+    showSuggestions('type', suggestionBox_type, this, thisWindowId);
 });
 ingredientTypeInput.addEventListener('blur', function() {
     suggestionBox_type.style.display = 'none';
@@ -118,101 +132,6 @@ ingredientTypeInput.addEventListener('blur', function() {
 ingredientTypeInput.addEventListener('keydown', function (e) {
     navigateSuggestions(e, suggestionBox_type);
 });
-
-// ***
-// Show suggestions
-// ***
-
-async function showSuggestions(suggestionType, suggestionBox, inputElement) {
-    let suggestions = [];
-    let allFiles = [];
-
-    // Compute suggestions
-    switch (suggestionType) {
-        case 'ingredient':
-            allFiles = await ipcRenderer.invoke('get-ingredient-names');
-            break;
-        case 'type':
-            allFiles = await ipcRenderer.invoke('get-ingredient-types');
-            break;
-        default:
-            console.log('Invalid suggestion type: ' + suggestionType);
-    }
-
-    if(allFiles.length === 0) return;
-    
-    const input = inputElement.value.toLowerCase();
-    suggestions = allFiles.filter(name => name.toLowerCase().includes(input));
-
-    // Show suggestions
-    suggestionBox.innerHTML = '';
-    suggestionBox.style.display = 'block';
-    currentFocus = -1;
-
-    suggestions.forEach(suggestion => {
-        const div = document.createElement('div');
-        div.textContent = suggestion;
-        div.addEventListener('click', async function () {
-            inputElement.value = suggestion;
-            suggestionBox.innerHTML = '';
-
-            if (suggestionType === 'ingredient') {
-                // Request file content
-                let ingredientData = await ipcRenderer.invoke('read-ingredient-file', suggestion);
-                populateInputs(ingredientData);
-                isUpdateMode = true;
-                addIngredientBtn.textContent = 'Update ingredient';
-                ingredientNameInput.disabled = true;
-            }
-        });
-        suggestionBox.appendChild(div);
-    });
-}
-
-function navigateSuggestions(e, suggestionBox) {
-    const suggestionItems = suggestionBox.getElementsByTagName('div');
-    if (e.key === 'ArrowDown') {
-        currentFocus++;
-        addActive(suggestionItems, suggestionBox);
-    } else if (e.key === 'ArrowUp') {
-        currentFocus--;
-        addActive(suggestionItems, suggestionBox);
-    } else if (e.key === 'Enter') {
-        e.preventDefault();
-        if (currentFocus > -1) {
-            if (suggestionItems) suggestionItems[currentFocus].click();
-        }
-    }
-}
-
-// Adds 'autocomplete-active' class to the currently focused item in the list and adjusts the scroll position
-function addActive(items, suggestionBox) {
-    if (!items) return false;
-    removeActive(items);
-    if (currentFocus >= items.length) currentFocus = 0;
-    if (currentFocus < 0) currentFocus = items.length - 1;
-    items[currentFocus].classList.add('autocomplete-active');
-    adjustScroll(items[currentFocus], suggestionBox);
-}
-// Remove 'autocomplete-active' class from all items in the list
-function removeActive(items) {
-    for (let i = 0; i < items.length; i++) {
-        items[i].classList.remove('autocomplete-active');
-    }
-}
-// Adjusts the scroll position of the suggestion box to keep the active item in view
-function adjustScroll(activeItem, suggestionBox) {
-    const itemOffsetTop = activeItem.offsetTop;
-    const itemHeight = activeItem.offsetHeight;
-    const boxHeight = suggestionBox.clientHeight;
-    const scrollTop = suggestionBox.scrollTop;
-
-    if (itemOffsetTop < scrollTop) {
-        suggestionBox.scrollTop = itemOffsetTop;
-    } else if (itemOffsetTop + itemHeight > scrollTop + boxHeight) {
-        suggestionBox.scrollTop = itemOffsetTop + itemHeight - boxHeight;
-    }
-}
 
 function populateInputs(ingredientData){
     ingredientTypeInput.value = ingredientData.type || '';
