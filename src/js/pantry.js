@@ -1,5 +1,6 @@
 const { ipcRenderer } = require('electron');
 const { messageBoxUpdate } = require('./messageBoxUpdate');
+const { showSuggestions, navigateSuggestions } = require('./suggestions');
 
 const ingredientNameInput = document.getElementById('ingredientName');
 const suggestionBox = document.getElementById('suggestionBox');
@@ -13,107 +14,42 @@ const addIngredientButton = document.getElementById('addIngredientButton');
 const tdQuantityInput = document.getElementById('tdQuantityInput');
 
 
-
-
-
 // INGREDIENT NAME AUTOCOMPLETE
 ingredientNameInput.addEventListener('focus', async function () {
-    let ingredientsNameList = await ipcRenderer.invoke('get-ingredient-names');
-    const input = this.value.toLowerCase();
-    const suggestions = ingredientsNameList.filter(name => name.toLowerCase().includes(input));
-    
-    showSuggestions(suggestions, suggestionBox, ingredientNameInput);
+    const thisWindowId = await ipcRenderer.invoke('get-window-id');
+    showSuggestions('ingredient', suggestionBox, this, thisWindowId);
 });
 ingredientNameInput.addEventListener('input', async function () {
-    let ingredientsNameList = await ipcRenderer.invoke('get-ingredient-names');
-    const input = this.value.toLowerCase();
-    const suggestions = ingredientsNameList.filter(name => name.toLowerCase().includes(input));
-    console.log(suggestions);
-    showSuggestions(suggestions, suggestionBox, ingredientNameInput);
+    const thisWindowId = await ipcRenderer.invoke('get-window-id');
+    showSuggestions('ingredient', suggestionBox, this, thisWindowId);
+});
+
+ipcRenderer.on('suggested-ingredient-clicked', async (event, ingredientData) => {
+    // Reset quantity inputs
+    quantityGramsInput.value = 0;
+    quantityUnitInput.value = 0;
+    // Request ingredient file content
+    ingredientToAdd_details = ingredientData;
+    if (ingredientToAdd_details) {
+        tdQuantityInput.style.display = 'table-cell';
+        addIngredientButton.style.display = 'inline';
+        if (ingredientToAdd_details.unitName) {
+            unitNameSpan.textContent = ingredientToAdd_details.unitName;
+            unitAlternativeSpan.style.display = 'inline';
+            unitWeight = ingredientToAdd_details.unitWeight;
+        } else {
+            unitAlternativeSpan.style.display = 'none';
+            unitWeight = 0;
+        }
+    }
+    else{
+        clearSuggestedIngredientRow();
+    }
 });
 
 
-function showSuggestions(suggestions, suggestionBox, inputElement) {
-    suggestionBox.innerHTML = '';
-    currentFocus = -1;
-    suggestions.forEach(suggestion => {
-        const div = document.createElement('div');
-        div.textContent = suggestion;
-        div.style.padding = '8px';
-        div.style.cursor = 'pointer';
-        div.addEventListener('click', async function () {
-            inputElement.value = suggestion;
-            suggestionBox.innerHTML = '';
-            // Reset quantity inputs
-            quantityGramsInput.value = 0;
-            quantityUnitInput.value = 0;
-            // Request ingredient file content
-            ingredientToAdd_details = await ipcRenderer.invoke('read-ingredient-file', suggestion);
-            if (ingredientToAdd_details) {
-                tdQuantityInput.style.display = 'table-cell';
-                addIngredientButton.style.display = 'inline';
-                if (ingredientToAdd_details.unitName) {
-                    unitNameSpan.textContent = ingredientToAdd_details.unitName;
-                    unitAlternativeSpan.style.display = 'inline';
-                    unitWeight = ingredientToAdd_details.unitWeight;
-                } else {
-                    unitAlternativeSpan.style.display = 'none';
-                    unitWeight = 0;
-                }
-            }
-            else{
-                clearSuggestedIngredientRow();
-            }
-        });
-        div.addEventListener('mouseover', function () {
-            removeActive(suggestionBox.getElementsByTagName('div'));
-            this.classList.add('autocomplete-active');
-        });
-        div.addEventListener('mouseout', function () {
-            this.classList.remove('autocomplete-active');
-        });
-        suggestionBox.appendChild(div);
-    });
-    const rect = inputElement.getBoundingClientRect();
-    suggestionBox.style.left = `${rect.left}px`;
-    suggestionBox.style.top = `${rect.bottom}px`;
-    suggestionBox.style.width = `${rect.width}px`;
-}
-
-function addActive(items) {
-    if (!items) return false;
-    removeActive(items);
-    if (currentFocus >= items.length) currentFocus = 0;
-    if (currentFocus < 0) currentFocus = items.length - 1;
-    items[currentFocus].classList.add('autocomplete-active');
-}
-
-function removeActive(items) {
-    for (let i = 0; i < items.length; i++) {
-        items[i].classList.remove('autocomplete-active');
-    }
-}
-
 ingredientNameInput.addEventListener('keydown', function (e) {
-    const suggestionItems = suggestionBox.getElementsByTagName('div');
-    if (e.key === 'ArrowDown') {
-        currentFocus++;
-        addActive(suggestionItems);
-        if (currentFocus >= 0 && currentFocus < suggestionItems.length) {
-            suggestionItems[currentFocus].scrollIntoView({ block: 'nearest' });
-        }
-    } else if (e.key === 'ArrowUp') {
-        currentFocus--;
-        addActive(suggestionItems);
-        if (currentFocus >= 0 && currentFocus < suggestionItems.length) {
-            suggestionItems[currentFocus].scrollIntoView({ block: 'nearest' });
-        }
-    } else if (e.key === 'Enter') {
-        e.preventDefault();
-        if (currentFocus > -1) {
-            if (suggestionItems) suggestionItems[currentFocus].click();
-        }
-    }
+    navigateSuggestions(e, suggestionBox);
 });
 
 function clearSuggestedIngredientRow() {

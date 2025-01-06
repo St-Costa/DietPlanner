@@ -75,30 +75,10 @@ ipcRenderer.on('suggested-ingredient-clicked', (event, ingredientData) => {
 
 // RECIPE NAME AUTOCOMPLETE
 recipeNameInput.addEventListener('focus', async function () {
-/*     let recipesNameList = await ipcRenderer.invoke('get-recipe-names');
-    const recipeName = recipeNameInput.value.trim().toLowerCase();
-
-    const suggestions = recipesNameList.filter(name => name.toLowerCase().includes(recipeName.toLowerCase()));
-    showSuggestions(suggestions, suggestionBoxRecipe, recipeNameInput); */
-
     const thisWindowId = await ipcRenderer.invoke('get-window-id');
     showSuggestions('recipe', suggestionBox_recipe, this, thisWindowId);
 });
 recipeNameInput.addEventListener('input', async function () {
-/*     let recipesNameList = await ipcRenderer.invoke('get-recipe-names');
-    const recipeName = recipeNameInput.value.trim().toLowerCase();
-
-    // If the recipe does not exist, clear table
-    if (!recipesNameList.includes(recipeName)) {
-        dynamicTable.innerHTML = '';
-        preparationBox.value = '';
-        recipeNutritionalValue = {};
-        clearSuggestedIngredientRow();
-    }
-
-    const suggestions = recipesNameList.filter(name => name.toLowerCase().includes(recipeName));
-    showSuggestions(suggestions, suggestionBox_recipe, recipeNameInput); */
-
     const thisWindowId = await ipcRenderer.invoke('get-window-id');
     showSuggestions('recipe', suggestionBox_recipe, this, thisWindowId);
 });

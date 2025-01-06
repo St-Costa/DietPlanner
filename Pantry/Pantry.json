@@ -1,10 +1,14 @@
 {
   "ingredientsArray": [
     "Broccolo",
-    "Chicken breast"
+    "Chicken breast",
+    "SPAR Vital - kidneybohnen",
+    "Prova 2"
   ],
   "quantitiesArray": [
     10,
-    10
+    10,
+    100,
+    100
   ]
 }
