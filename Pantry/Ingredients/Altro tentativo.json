@@ -1,6 +1,6 @@
 {
-  "name": "Prova 2",
-  "type": "Vegetable",
+  "name": "Altro tentativo",
+  "type": "Meat",
   "kcal": "4",
   "protein": "4",
   "fiber": "4",
@@ -11,6 +11,6 @@
   "salt": "4",
   "chol": "4",
   "cost": "4",
-  "unitWeight": "4",
-  "unitName": "4"
+  "unitWeight": "",
+  "unitName": ""
 }

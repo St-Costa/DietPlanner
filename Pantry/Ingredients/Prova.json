@@ -10,7 +10,7 @@
   "sugar": "5",
   "salt": "5",
   "chol": "5",
-  "cost": "5",
-  "unitWeight": "",
-  "unitName": ""
+  "cost": "1",
+  "unitWeight": "5",
+  "unitName": "5"
 }

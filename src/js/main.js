@@ -213,9 +213,9 @@ CREATE FILES
 ipcMain.handle('create-ingredient-file', async (event, ingredientName, ingredientData) => {
     const filePath = path.join(__dirname, '../../Pantry/Ingredients', `${ingredientName}.json`);
     let result = createFile(filePath, ingredientData);
-    BrowserWindow.getAllWindows().forEach(win => {
-        win.webContents.send('refresh-ingredient-list');
-    });
+    // Refresh all windows
+    refreshAllWindows('From create-ingredient-file');
+
     return result;
 });
 
@@ -232,10 +232,10 @@ async function createFile(filePath, fileContent) {
         try {
             await fs.promises.writeFile(filePath, JSON.stringify(fileContent, null, 2));
             console.log('File created successfully');
-            return 'success';
+            return 'create-file-success';
         } catch (err) {
             console.error('Failed to create file:', err);
-            return 'failure';
+            return 'create-file-failure';
         }
     }
 }
@@ -312,10 +312,10 @@ async function deleteFile(filePath) {
     try {
         await fs.promises.unlink(filePath);
         console.log('File deleted successfully');
-        return 'success';
+        return 'delete-file-success';
     } catch (err) {
         console.error('Failed to delete file:', err);
-        return 'failure';
+        return 'delete-file-failure';
     }
 }
 
@@ -375,10 +375,10 @@ async function updateFile(filePath, fileContent) {
     try {
         await fs.promises.writeFile(filePath, fileContent);
         console.log('File updated successfully');
-        return 'success';
+        return 'file-update-success';
     } catch (err) {
         console.error('Failed to update file:', err);
-        return 'failure';
+        return 'file-update-failure';
     }
 }
 

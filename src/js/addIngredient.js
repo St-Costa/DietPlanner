@@ -1,5 +1,5 @@
 const { ipcRenderer } = require('electron');
-const { messageBoxUpdate } = require('./messageBoxUpdate');
+const { errorHandling } = require('./messageBoxUpdate');
 const { showSuggestions, navigateSuggestions } = require('./suggestions');
 
 const addIngredientBtn = document.getElementById('addIngredient');
@@ -199,26 +199,12 @@ addIngredientBtn.addEventListener('click', async function (event) {
     let result = false;
     if (isUpdateMode) {
         result = await ipcRenderer.invoke('update-ingredient-file', ingredientName, fileContent);
-        if (result == 'success') {
-            messageBoxUpdate(messageBox, 'File updated successfully!', true);
-            clearInputs();
-        } else if (result == 'failure') {
-            messageBoxUpdate(messageBox, 'Failed to update file!', false);
-        } else if (result == "file-not-found"){
-            messageBoxUpdate(messageBox, 'File not found!', false);
-        }
+        errorHandling(messageBox, result);
+        clearInputs();
     } else {
         result = await ipcRenderer.invoke('create-ingredient-file', ingredientName, fileContent);
-        if (result == 'success'){
-            messageBoxUpdate(messageBox, 'File created successfully!', true);
-            clearInputs();
-        }
-        else if (result == 'failure'){
-            messageBoxUpdate(messageBox, 'Failed to create file!', false);
-        }
-        else if (result == "file-exists"){
-            messageBoxUpdate(messageBox, 'File already exists!', false);
-        }
+        errorHandling(messageBox, result);
+        clearInputs();
     }
 
 });

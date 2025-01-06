@@ -1,5 +1,5 @@
 const { ipcRenderer } = require('electron');
-const { messageBoxUpdate } = require('./messageBoxUpdate');
+const { errorHandling } = require('./messageBoxUpdate');
 const { showSuggestions, navigateSuggestions } = require('./suggestions');
 
 const ingredientNameInput = document.getElementById('ingredientName');
