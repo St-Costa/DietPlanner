@@ -97,8 +97,13 @@ ingredientNameInput.addEventListener('input', async function() {
     const thisWindowId = await ipcRenderer.invoke('get-window-id');
     showSuggestions('ingredient', suggestionBox_name, this, thisWindowId);
 });
-ingredientNameInput.addEventListener('blur', function() {
-    suggestionBox_name.style.display = 'none';
+
+// When click outside input field, hide suggestion box
+// If the click is on the suggestion box, do not hide it
+ingredientNameInput.addEventListener('blur', function(event) {
+    if (suggestionBox_name.contains(event.relatedTarget)) {
+        suggestionBox_name.style.display = 'none';
+    }
 });
 
 ingredientNameInput.addEventListener('keydown', function (e) {
@@ -126,8 +131,14 @@ ingredientTypeInput.addEventListener('input', async function () {
     const thisWindowId = await ipcRenderer.invoke('get-window-id');
     showSuggestions('type', suggestionBox_type, this, thisWindowId);
 });
-ingredientTypeInput.addEventListener('blur', function() {
-    suggestionBox_type.style.display = 'none';
+
+// When click outside input field, hide suggestion box
+// If the click is on the suggestion box, do not hide it
+ingredientTypeInput.addEventListener('blur', function(event) {
+    console.log(event);
+    if (suggestionBox_name.contains(event.relatedTarget)) {
+        suggestionBox_name.style.display = 'none';
+    }
 });
 ingredientTypeInput.addEventListener('keydown', function (e) {
     navigateSuggestions(e, suggestionBox_type);

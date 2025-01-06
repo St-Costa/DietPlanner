@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="../css/button.css">
     <link rel="stylesheet" href="../css/table.css">
     <link rel="stylesheet" href="../css/messageBox.css">
+    <link rel="stylesheet" href="../css/suggestionBox.css">
     <title>Add Recipe</title>
 </head>
 <body>
@@ -30,11 +31,11 @@
 
     <table>
         <tr>
-            <th class="right noStyle">Recipe:</th>
+            <th class="right noStyle bottom">Recipe:</th>
             <td colspan="2" class="left">
-                <input type="text" id="recipeName">
-                <div id="suggestionBox_recipe"></div>
-                <button id="deleteRecipe">Delete recipe</button>
+                <input type="text" id="recipeName" class="bottom">
+                <div id="suggestionBox_recipe" class="suggestionBox bottom"></div>
+                <button id="deleteRecipe" class="bottom">Delete recipe</button>
             </td>
         </tr>
         <tr>
@@ -88,7 +89,7 @@
             <td colspan="13"></td>
         </tr>
         <tr>
-            <td><input type="text" id="ingredientName"><div id="suggestionBox"></div></td>
+            <td><input type="text" id="ingredientName" /><div id="suggestionBox_ingredient" class="suggestionBox"></div></td>
             <td id="tdQuantityInput" class="left">
                 <input type="number" id="quantityGrams" class="numberInput" step="0.1"> g
                 <div id="unitAlternative" style="display: inline;">

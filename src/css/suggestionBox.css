@@ -1,0 +1,20 @@
+.suggestionBox {
+    max-height: 100px;
+    overflow-y: auto;
+    position: absolute;
+    background-color: white;
+    z-index: 1000;
+    color: black;
+    text-align: left;
+    width: 100%;
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}
+
+.suggestionBox div {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.suggestionBox div:hover, .autocomplete-active {
+    background-color: #f0f0f0;
+}

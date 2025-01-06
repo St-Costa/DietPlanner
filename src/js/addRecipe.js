@@ -1,15 +1,16 @@
 const { ipcRenderer } = require('electron');
 const { messageBoxUpdate } = require('./messageBoxUpdate');
+const { showSuggestions, navigateSuggestions } = require('./suggestions');
 
 const ingredientNameInput = document.getElementById('ingredientName');
-const suggestionBox = document.getElementById('suggestionBox');
+const suggestionBox_ingredient = document.getElementById('suggestionBox_ingredient');
 const unitNameSpan = document.getElementById('unitName');
 const messageBoxDiv = document.getElementById('messageBox');
 const unitAlternativeSpan = document.getElementById('unitAlternative');
 const quantityGramsInput = document.getElementById('quantityGrams');
 const quantityUnitInput = document.getElementById('quantityUnit');
 const recipeNameInput = document.getElementById('recipeName');
-const suggestionBoxRecipe = document.getElementById('suggestionBox_recipe');
+const suggestionBox_recipe = document.getElementById('suggestionBox_recipe');
 const preparationBox = document.getElementById('preparation');
 const dynamicTable = document.getElementById('dynamicTable');
 const addIngredientButton = document.getElementById('addIngredientButton');
@@ -38,36 +39,53 @@ let currentFocus = -1;
 
 // INGREDIENT NAME AUTOCOMPLETE
 ingredientNameInput.addEventListener('focus', async function () {
-    let ingredientsNameList = await ipcRenderer.invoke('get-ingredient-names');
-    const input = this.value.toLowerCase();
-    const suggestions = ingredientsNameList.filter(name => name.toLowerCase().includes(input));
-    if (!suggestions.includes(input)) {
-        clearSuggestedIngredientRow();
-    }
-    showSuggestions(suggestions, suggestionBox, ingredientNameInput);
+    const thisWindowId = await ipcRenderer.invoke('get-window-id');
+    showSuggestions('ingredient', suggestionBox_ingredient, this, thisWindowId);
 });
 ingredientNameInput.addEventListener('input', async function () {
-    let ingredientsNameList = await ipcRenderer.invoke('get-ingredient-names');
-    const input = this.value.toLowerCase();
-    const suggestions = ingredientsNameList.filter(name => name.toLowerCase().includes(input));
-/*     if (!suggestions.includes(input)) {
-        clearSuggestedIngredientRow();
-    } */
-    showSuggestions(suggestions, suggestionBox, ingredientNameInput);
+    const thisWindowId = await ipcRenderer.invoke('get-window-id');
+    showSuggestions('ingredient', suggestionBox_ingredient, this, thisWindowId);
 });
 
+ipcRenderer.on('suggested-ingredient-clicked', (event, ingredientData) => {
+    // Reset quantity inputs
+    quantityGramsInput.value = 0;
+    quantityUnitInput.value = 0;
+    
+    // Update global variable
+    ingredientToAdd_details = ingredientData;
 
+    if (ingredientData) {
+        tdQuantityInput.style.display = 'table-cell';
+        addIngredientButton.style.display = 'inline';
+        if (ingredientData.unitName) {
+            unitNameSpan.textContent = ingredientData.unitName;
+            unitAlternativeSpan.style.display = 'inline';
+            unitWeight = ingredientData.unitWeight;
+        } else {
+            unitAlternativeSpan.style.display = 'none';
+            unitWeight = 0;
+        }
+        updateIngredientDetails();
+    }
+    else{
+        clearSuggestedIngredientRow();
+    }
+});
 
-// Request recipe names for autocompletion
+// RECIPE NAME AUTOCOMPLETE
 recipeNameInput.addEventListener('focus', async function () {
-    let recipesNameList = await ipcRenderer.invoke('get-recipe-names');
+/*     let recipesNameList = await ipcRenderer.invoke('get-recipe-names');
     const recipeName = recipeNameInput.value.trim().toLowerCase();
 
     const suggestions = recipesNameList.filter(name => name.toLowerCase().includes(recipeName.toLowerCase()));
-    showSuggestions(suggestions, suggestionBoxRecipe, recipeNameInput);
+    showSuggestions(suggestions, suggestionBoxRecipe, recipeNameInput); */
+
+    const thisWindowId = await ipcRenderer.invoke('get-window-id');
+    showSuggestions('recipe', suggestionBox_recipe, this, thisWindowId);
 });
 recipeNameInput.addEventListener('input', async function () {
-    let recipesNameList = await ipcRenderer.invoke('get-recipe-names');
+/*     let recipesNameList = await ipcRenderer.invoke('get-recipe-names');
     const recipeName = recipeNameInput.value.trim().toLowerCase();
 
     // If the recipe does not exist, clear table
@@ -79,12 +97,18 @@ recipeNameInput.addEventListener('input', async function () {
     }
 
     const suggestions = recipesNameList.filter(name => name.toLowerCase().includes(recipeName));
-    showSuggestions(suggestions, suggestionBoxRecipe, recipeNameInput);
+    showSuggestions(suggestions, suggestionBox_recipe, recipeNameInput); */
+
+    const thisWindowId = await ipcRenderer.invoke('get-window-id');
+    showSuggestions('recipe', suggestionBox_recipe, this, thisWindowId);
 });
 
+ipcRenderer.on('suggested-recipe-clicked', (event, recipeData) => {
+    recipeNutritionalValue = recipeData;
+    renderRecipeTable();
+});
 
-
-function showSuggestions(suggestions, suggestionBox, inputElement) {
+/* function showSuggestions(suggestions, suggestionBox, inputElement) {
     suggestionBox.innerHTML = '';
     currentFocus = -1;
     suggestions.forEach(suggestion => {
@@ -136,7 +160,7 @@ function showSuggestions(suggestions, suggestionBox, inputElement) {
     suggestionBox.style.left = `${rect.left}px`;
     suggestionBox.style.top = `${rect.bottom}px`;
     suggestionBox.style.width = `${rect.width}px`;
-}
+} */
 
 function addActive(items) {
     if (!items) return false;
@@ -153,7 +177,7 @@ function removeActive(items) {
 }
 
 ingredientNameInput.addEventListener('keydown', function (e) {
-    const suggestionItems = suggestionBox.getElementsByTagName('div');
+    const suggestionItems = suggestionBox_ingredient.getElementsByTagName('div');
     if (e.key === 'ArrowDown') {
         currentFocus++;
         addActive(suggestionItems);
@@ -175,7 +199,7 @@ ingredientNameInput.addEventListener('keydown', function (e) {
 });
 
 recipeNameInput.addEventListener('keydown', function (e) {
-    const suggestionItems = suggestionBoxRecipe.getElementsByTagName('div');
+    const suggestionItems = suggestionBox_recipe.getElementsByTagName('div');
     if (e.key === 'ArrowDown') {
         currentFocus++;
         addActive(suggestionItems);
@@ -225,7 +249,7 @@ async function renderRecipeTable () {
     }
     else{
         // Hide the suggestion box if the recipe exists
-        suggestionBoxRecipe.innerHTML = '';
+        suggestionBox_recipe.innerHTML = '';
 
         preparationBox.value = recipeNutritionalValue.preparationText || '';
         //Update preparation default text for local modifications

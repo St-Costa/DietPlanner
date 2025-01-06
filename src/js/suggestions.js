@@ -13,6 +13,9 @@ module.exports = {
             case 'type':
                 allFiles = await ipcRenderer.invoke('get-ingredient-types');
                 break;
+            case 'recipe':
+                allFiles = await ipcRenderer.invoke('get-recipe-names');
+                break;
             default:
                 console.log('Invalid suggestion type: ' + suggestionType);
         }
@@ -29,6 +32,7 @@ module.exports = {
 
         suggestions.forEach(suggestion => {
             const divSuggestion = document.createElement('div');
+            divSuggestion.style.width = inputElement.offsetWidth + 'px !important';
             divSuggestion.textContent = suggestion;
             
             
@@ -47,14 +51,22 @@ module.exports = {
                     case 'type':
                         //console.log("Type suggestion clicked: no need to do anything");
                         break;
+                    case 'recipe':
+                        // Request file content
+                        itemData = await ipcRenderer.invoke('read-recipe-file', suggestion);
+                        ipcRenderer.send('suggestion-clicked', {itemData, suggestionType, targetWindowId});
+                        break;
                     default:
                         console.log('Invalid suggestion type: ' + suggestionType);
                 }
                 
             });
             suggestionBox.appendChild(divSuggestion);
-
         });
+        const rect = inputElement.getBoundingClientRect();
+        //suggestionBox.style.left = `${rect.left}px`;
+        //suggestionBox.style.top = `${rect.bottom}px`;
+        suggestionBox.style.width = `${rect.width}px`;
     },
 
 

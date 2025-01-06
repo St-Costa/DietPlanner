@@ -81,6 +81,12 @@ ipcMain.on('suggestion-clicked', (event, arg) => {
     if(suggestionType === 'ingredient') {
         BrowserWindow.fromId(targetWindowId).webContents.send('suggested-ingredient-clicked', itemData);   
     }
+    else if(suggestionType === 'recipe') {
+        BrowserWindow.fromId(targetWindowId).webContents.send('suggested-recipe-clicked', itemData);
+    }
+    else {
+        console.error('Invalid suggestion type:', suggestionType);
+    }
     
 });
 
