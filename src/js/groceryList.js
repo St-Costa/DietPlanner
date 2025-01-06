@@ -7,7 +7,8 @@ const listName = document.getElementById('listName');
 const divExportButtons = document.getElementById('exportButtons');
 const messageBoxDiv = document.getElementById('messageBox');
 
-// For when I create an ingredient in the other view
+// On opening the view
+// On updating ingredients, recipes, ...
 ipcRenderer.on('init-args', (event, args) => {
     let groceryType = args.groceryType;
 
@@ -18,16 +19,18 @@ ipcRenderer.on('init-args', (event, args) => {
     }
 });
 
-
+// Case: recipe
+// Read recipe file
+// render grocery list
 async function fetchAndRenderGroceryList_recipe(recipeName) {
     try {
         // Render ingredients in table
         recipeData = await ipcRenderer.invoke('read-recipe-file', recipeName);
-        let recipeIngredient = recipeData.ingredientsArray;
-        let recipeQuantity = recipeData.quantitiesArray;
+        let recipeIngredientsArray = recipeData.ingredientsArray;
+        let recipeQuantitiesArray = recipeData.quantitiesArray;
 
         // Subtract pantry ingredients from grocery list
-        let updatedIngredientAndRecipe = await subtractPantryIngredients(recipeIngredient, recipeQuantity);
+        let updatedIngredientAndRecipe = await subtractPantryIngredients(recipeIngredientsArray, recipeQuantitiesArray);
         const updatedIngredients = updatedIngredientAndRecipe.ingredientsArray;
         const updatedQuantities = updatedIngredientAndRecipe.quantitiesArray;
 
@@ -66,7 +69,7 @@ async function verbosifyIngredientsQuantitiesCost(ingredientsArray, quantitiesAr
 
         // Product Name
         if (ingredientData.unitName !== "") {
-            verboseProductName.push(ingredientData.unitName);
+            verboseProductName.push(unitName);
         }
         else {
             verboseProductName.push("");

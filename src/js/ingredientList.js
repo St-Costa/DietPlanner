@@ -31,8 +31,8 @@ addIngredientBtn.addEventListener('click', function (event) {
 
 
 // For when I create an ingredient in the other view
-ipcRenderer.on('refresh-ingredient-list', () => {
-    console.log("Refreshing ingredients");
+ipcRenderer.on('refresh', (event, args) => {
+    console.log("Refreshing because:", args);
     fetchAndRenderIngredients();
 });
 
@@ -62,7 +62,7 @@ async function fetchAndRenderIngredients() {
             });
         });
 
-        // Render types in table
+        // Render types button
         ipcRenderer.invoke('get-ingredient-types').then((types) => {
             const allButton = document.createElement('button');
             allButton.textContent = 'All types';
@@ -125,7 +125,7 @@ async function renderTableRow(ingredientData) {
         }
         else{
             const resultOfDeletion = await ipcRenderer.invoke('delete-ingredient', ingredientData.name);
-            await fetchAndRenderIngredients();
+            //await fetchAndRenderIngredients();
             if(resultOfDeletion){
                 messageBoxUpdate(messageBoxDiv, 'Ingredient deleted successfully', true);
             }
@@ -171,7 +171,7 @@ function deletingIngredientPrompt(ingredientName, recipeList){
     yesButton.textContent = 'Yes';
     yesButton.addEventListener('click', async () => {
         const resultOfDeletion = await ipcRenderer.invoke('delete-ingredient', ingredientName);
-        await fetchAndRenderIngredients();
+        //await fetchAndRenderIngredients();
         messageBoxDiv.textContent = '';
         messageBoxDiv.style.color = "";
         messageBoxDiv.style.border = '1px none';

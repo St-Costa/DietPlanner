@@ -17,7 +17,6 @@ const ingredientCholInput = document.getElementById('ingredientChol');
 const ingredientCostInput = document.getElementById('ingredientCost');
 const ingredientUnitWeightInput = document.getElementById('ingredientUnitWeight');
 const ingredientUnitNameInput = document.getElementById('ingredientUnitName');
-
 const suggestionBox_name = document.getElementById('suggestionBox_name');
 const suggestionBox_type = document.getElementById('suggestionBox_type');
 
@@ -73,20 +72,13 @@ function clearInputs() {
 }
 
 // Add event listeners to inputs
-ingredientNameInput.addEventListener('input', checkInputs);
-ingredientTypeInput.addEventListener('input', checkInputs);
-ingredientKcalInput.addEventListener('input', checkInputs);
-ingredientProteinInput.addEventListener('input', checkInputs);
-ingredientFiberInput.addEventListener('input', checkInputs);
-ingredientFatInput.addEventListener('input', checkInputs);
-ingredientSaturatedInput.addEventListener('input', checkInputs);
-ingredientCarbInput.addEventListener('input', checkInputs);
-ingredientSugarInput.addEventListener('input', checkInputs);
-ingredientSaltInput.addEventListener('input', checkInputs);
-ingredientCholInput.addEventListener('input', checkInputs);
-ingredientCostInput.addEventListener('input', checkInputs);
-ingredientUnitWeightInput.addEventListener('input', checkInputs);
-ingredientUnitNameInput.addEventListener('input', checkInputs);
+const inputs = [
+    ingredientNameInput, ingredientTypeInput, ingredientKcalInput, ingredientProteinInput,
+    ingredientFiberInput, ingredientFatInput, ingredientSaturatedInput, ingredientCarbInput,
+    ingredientSugarInput, ingredientSaltInput, ingredientCholInput, ingredientCostInput,
+    ingredientUnitWeightInput, ingredientUnitNameInput
+];
+inputs.forEach(input => input.addEventListener('input', checkInputs));
 
 
 
@@ -95,32 +87,18 @@ ingredientUnitNameInput.addEventListener('input', checkInputs);
 // Autocompletion for ingredient name
 // ***
 
-ingredientNameInput.addEventListener('focus', async function () {
-    let ingredientsName = await ipcRenderer.invoke('get-ingredient-names');
-    showSuggestions(ingredientsName, suggestionBox_name, ingredientNameInput);
+ingredientNameInput.addEventListener('focus', function() {
+    showSuggestions('ingredient', suggestionBox_name, this);
 });
-
-ingredientNameInput.addEventListener('input', async function () {
-    let ingredientsName = await ipcRenderer.invoke('get-ingredient-names');
-    const input = this.value.toLowerCase();
-    const suggestions = ingredientsName.filter(name => name.toLowerCase().includes(input));
-    showSuggestions(suggestions, suggestionBox_name, ingredientNameInput);
+ingredientNameInput.addEventListener('input', function() {
+    showSuggestions('ingredient', suggestionBox_name, this);
+});
+ingredientNameInput.addEventListener('blur', function() {
+    suggestionBox_name.style.display = 'none';
 });
 
 ingredientNameInput.addEventListener('keydown', function (e) {
-    const suggestionItems = suggestionBox_name.getElementsByTagName('div');
-    if (e.key === 'ArrowDown') {
-        currentFocus++;
-        addActive(suggestionItems, suggestionBox_name);
-    } else if (e.key === 'ArrowUp') {
-        currentFocus--;
-        addActive(suggestionItems, suggestionBox_name);
-    } else if (e.key === 'Enter') {
-        e.preventDefault();
-        if (currentFocus > -1) {
-            if (suggestionItems) suggestionItems[currentFocus].click();
-        }
-    }
+    navigateSuggestions(e, suggestionBox_name);
 });
 
 // ***
@@ -128,48 +106,57 @@ ingredientNameInput.addEventListener('keydown', function (e) {
 // ***
 
 // Request ingredient types for autocompletion
-ingredientTypeInput.addEventListener('focus', async function () {
-    let ingredientTypes = await ipcRenderer.invoke('get-ingredient-types');
-    showSuggestions(ingredientTypes, suggestionBox_type, ingredientTypeInput);
+ingredientTypeInput.addEventListener('focus', function () {
+    showSuggestions('type', suggestionBox_type, this);
 });
-ingredientTypeInput.addEventListener('input', async function () {
-    let ingredientTypes = await ipcRenderer.invoke('get-ingredient-types');
-    const input = this.value.toLowerCase();
-    const suggestions = ingredientTypes.filter(type => type.toLowerCase().includes(input));
-    showSuggestions(suggestions, suggestionBox_type, ingredientTypeInput);
+ingredientTypeInput.addEventListener('input', function () {
+    showSuggestions('type', suggestionBox_type, this);
+});
+ingredientTypeInput.addEventListener('blur', function() {
+    suggestionBox_type.style.display = 'none';
 });
 ingredientTypeInput.addEventListener('keydown', function (e) {
-    const suggestionItems = suggestionBox_type.getElementsByTagName('div');
-    if (e.key === 'ArrowDown') {
-        currentFocus++;
-        addActive(suggestionItems, suggestionBox_type);
-    } else if (e.key === 'ArrowUp') {
-        currentFocus--;
-        addActive(suggestionItems, suggestionBox_type);
-    } else if (e.key === 'Enter') {
-        e.preventDefault();
-        if (currentFocus > -1) {
-            if (suggestionItems) suggestionItems[currentFocus].click();
-        }
-    }
+    navigateSuggestions(e, suggestionBox_type);
 });
 
 // ***
 // Show suggestions
 // ***
 
-function showSuggestions(suggestions, suggestionBox, inputElement) {
+async function showSuggestions(suggestionType, suggestionBox, inputElement) {
+    let suggestions = [];
+    let allFiles = [];
+
+    // Compute suggestions
+    switch (suggestionType) {
+        case 'ingredient':
+            allFiles = await ipcRenderer.invoke('get-ingredient-names');
+            break;
+        case 'type':
+            allFiles = await ipcRenderer.invoke('get-ingredient-types');
+            break;
+        default:
+            console.log('Invalid suggestion type: ' + suggestionType);
+    }
+
+    if(allFiles.length === 0) return;
+    
+    const input = inputElement.value.toLowerCase();
+    suggestions = allFiles.filter(name => name.toLowerCase().includes(input));
+
+    // Show suggestions
     suggestionBox.innerHTML = '';
     suggestionBox.style.display = 'block';
     currentFocus = -1;
+
     suggestions.forEach(suggestion => {
         const div = document.createElement('div');
         div.textContent = suggestion;
         div.addEventListener('click', async function () {
             inputElement.value = suggestion;
             suggestionBox.innerHTML = '';
-            checkInputs(); // Check inputs after selecting a suggestion
-            if (inputElement === ingredientNameInput) {
+
+            if (suggestionType === 'ingredient') {
                 // Request file content
                 let ingredientData = await ipcRenderer.invoke('read-ingredient-file', suggestion);
                 populateInputs(ingredientData);
@@ -181,6 +168,24 @@ function showSuggestions(suggestions, suggestionBox, inputElement) {
         suggestionBox.appendChild(div);
     });
 }
+
+function navigateSuggestions(e, suggestionBox) {
+    const suggestionItems = suggestionBox.getElementsByTagName('div');
+    if (e.key === 'ArrowDown') {
+        currentFocus++;
+        addActive(suggestionItems, suggestionBox);
+    } else if (e.key === 'ArrowUp') {
+        currentFocus--;
+        addActive(suggestionItems, suggestionBox);
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (currentFocus > -1) {
+            if (suggestionItems) suggestionItems[currentFocus].click();
+        }
+    }
+}
+
+// Adds 'autocomplete-active' class to the currently focused item in the list and adjusts the scroll position
 function addActive(items, suggestionBox) {
     if (!items) return false;
     removeActive(items);
@@ -189,11 +194,13 @@ function addActive(items, suggestionBox) {
     items[currentFocus].classList.add('autocomplete-active');
     adjustScroll(items[currentFocus], suggestionBox);
 }
+// Remove 'autocomplete-active' class from all items in the list
 function removeActive(items) {
     for (let i = 0; i < items.length; i++) {
         items[i].classList.remove('autocomplete-active');
     }
 }
+// Adjusts the scroll position of the suggestion box to keep the active item in view
 function adjustScroll(activeItem, suggestionBox) {
     const itemOffsetTop = activeItem.offsetTop;
     const itemHeight = activeItem.offsetHeight;

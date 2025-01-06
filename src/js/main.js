@@ -270,6 +270,9 @@ ipcMain.handle('delete-ingredient', async (event, ingredient) => {
     const filePath = path.join(__dirname, '../../Pantry/Ingredients', `${ingredient}.json`);
     let resultOfDeletion = await deleteFile(filePath);
 
+    // Refresh all windows
+    refreshAllWindows('From delete-ingredient');
+
     return resultOfDeletion;
 });
 
@@ -327,13 +330,18 @@ ipcMain.handle('read-recipe-file', async (event, recipeName) => {
 ipcMain.handle('update-ingredient-file', async (event, ingredientName, fileContent) => {
     const filePath = path.join(__dirname, '../../Pantry/Ingredients', `${ingredientName}.json`);
     let result = updateFile(filePath, fileContent);
-    BrowserWindow.getAllWindows().forEach(win => {
-        win.webContents.send('refresh-ingredient-list');
-    });
+
+    // Refresh all windows
+    refreshAllWindows('From update-ingredient-file');
+
     return result;
 });
 
-
+function refreshAllWindows(message) {
+    BrowserWindow.getAllWindows().forEach(win => {
+        win.webContents.send('refresh', message);
+    });
+}
 
 async function updateFile(filePath, fileContent) {
     if (typeof fileContent !== 'string') {
