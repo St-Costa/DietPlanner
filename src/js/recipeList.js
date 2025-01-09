@@ -36,6 +36,23 @@ async function fetchAndRenderRecipes() {
                 let recipeNutritionalValue = {};
                 ipcRenderer.invoke('read-recipe-file', recipe).then(async (recipeData) => {
                     recipeNutritionalValue = await computeRecipeNutritionalValues(recipeData.ingredientsArray, recipeData.quantitiesArray);
+                    
+                    if(recipeNutritionalValue === 'ingredient-file-not-found') {
+                        recipeNutritionalValue = {
+                            name: recipeNutritionalValue, // 'ingredient-file-not-found'
+                            type: '-',
+                            kcal: '-',
+                            protein: '-',
+                            fiber: '-',
+                            fat: '-',
+                            saturated: '-',
+                            carb: '-',
+                            sugar: '-',
+                            salt: '-',
+                            chol: '-',
+                            cost: '-'
+                        };
+                    }
                     await renderTableRow(recipe, recipeNutritionalValue);
                 });
             });
@@ -67,6 +84,12 @@ async function computeRecipeNutritionalValues (ingredientArray, quantityArray) {
         const quantity = quantityArray[i];
 
         const ingredientData = await ipcRenderer.invoke('read-ingredient-file', ingredientName);
+        
+        // Ingredient file might be deleted
+        if(ingredientData === 'file-not-found') {
+            return 'ingredient-file-not-found';
+        }
+        
         totalNutritionalValues.kcal += ingredientData.kcal * quantity / 100;
         totalNutritionalValues.protein += ingredientData.protein * quantity / 100;
         totalNutritionalValues.fiber += ingredientData.fiber * quantity / 100;
@@ -90,18 +113,27 @@ async function computeRecipeNutritionalValues (ingredientArray, quantityArray) {
 async function renderTableRow(recipeName, recipeNutritionalValue) {
     const newRow = document.createElement('tr');
 
+    let warningMissingIngredient = '';
+    if(recipeNutritionalValue.name === 'ingredient-file-not-found') {
+        warningMissingIngredient = `
+                                    <div style='color: #ff5e00; font-size: 1.5em;display: inline-block;'>
+                                        ⚠
+                                    </div>`;
+    }
+
+    // If ingredient file is not found, display '-' for all values
     newRow.innerHTML = `
-        <td class="left">${recipeName}</td>
-        <td>${recipeNutritionalValue.kcal.toFixed(0)}</td>
-        <td>${recipeNutritionalValue.protein.toFixed(0)}</td>
-        <td>${recipeNutritionalValue.fiber.toFixed(0)}</td>
-        <td>${recipeNutritionalValue.fat.toFixed(0)}</td>
-        <td>${recipeNutritionalValue.saturated.toFixed(0)}</td>
-        <td>${recipeNutritionalValue.carb.toFixed(0)}</td>
-        <td>${recipeNutritionalValue.sugar.toFixed(0)}</td>
-        <td>${recipeNutritionalValue.salt.toFixed(2)}</td>
-        <td>${recipeNutritionalValue.chol.toFixed(0)}</td>
-        <td>${recipeNutritionalValue.cost.toFixed(2)}</td>
+        <td class="left">${recipeName} ${warningMissingIngredient}</td>
+        <td>${isNaN(recipeNutritionalValue.kcal) ? recipeNutritionalValue.kcal : recipeNutritionalValue.kcal.toFixed(0)}</td>
+        <td>${isNaN(recipeNutritionalValue.protein) ? recipeNutritionalValue.protein : recipeNutritionalValue.protein.toFixed(0)}</td>
+        <td>${isNaN(recipeNutritionalValue.fiber) ? recipeNutritionalValue.fiber : recipeNutritionalValue.fiber.toFixed(0)}</td>
+        <td>${isNaN(recipeNutritionalValue.fat) ? recipeNutritionalValue.fat : recipeNutritionalValue.fat.toFixed(0)}</td>
+        <td>${isNaN(recipeNutritionalValue.saturated) ? recipeNutritionalValue.saturated : recipeNutritionalValue.saturated.toFixed(0)}</td>
+        <td>${isNaN(recipeNutritionalValue.carb) ? recipeNutritionalValue.carb : recipeNutritionalValue.carb.toFixed(0)}</td>
+        <td>${isNaN(recipeNutritionalValue.sugar) ? recipeNutritionalValue.sugar : recipeNutritionalValue.sugar.toFixed(0)}</td>
+        <td>${isNaN(recipeNutritionalValue.salt) ? recipeNutritionalValue.salt : recipeNutritionalValue.salt.toFixed(2)}</td>
+        <td>${isNaN(recipeNutritionalValue.chol) ? recipeNutritionalValue.chol : recipeNutritionalValue.chol.toFixed(0)}</td>
+        <td>${isNaN(recipeNutritionalValue.cost) ? recipeNutritionalValue.cost : recipeNutritionalValue.cost.toFixed(2)}</td>
         <td><button class="deleteAddButton" id="openGroceryList">≡</button></td>
     `;
 
