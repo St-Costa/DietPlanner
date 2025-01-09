@@ -225,6 +225,14 @@ ipcMain.handle('create-recipe-file', async (event, recipeName, recipeData) => {
 });
 
 async function createFile(filePath, fileContent) {
+    // Check if the file content is acceptable
+    const nonAcceptedSymbols = /[^a-zA-Z0-9\s.,-]/;
+    if (nonAcceptedSymbols.test(JSON.stringify(fileContent))) {
+        console.error('File content contains non accepted symbols');
+        return 'invalid-file-content';
+    }
+
+
     if (fs.existsSync(filePath)) {
         console.error('File already exists:', filePath);
         return 'file-exists';
