@@ -25,6 +25,9 @@ module.exports = {
             case 'create-file-failure':
                 messageBoxUpdate(messageBoxDiv,'Failed to create file!', false);
                 break;
+            case 'invalid-file-content':
+                messageBoxUpdate(messageBoxDiv,'Invalid file content!', false);
+                break;
             
        }
     }

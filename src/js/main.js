@@ -226,9 +226,24 @@ ipcMain.handle('create-recipe-file', async (event, recipeName, recipeData) => {
 
 async function createFile(filePath, fileContent) {
     // Check if the file content is acceptable
+    // it checks every JSON entry
     const nonAcceptedSymbols = /[^a-zA-Z0-9\s.,-]/;
-    if (nonAcceptedSymbols.test(JSON.stringify(fileContent))) {
-        console.error('File content contains non accepted symbols');
+    const checkContent = (obj) => {
+        for (let key in obj) {
+            if (typeof obj[key] === 'object' && obj[key] !== null) {
+                if (checkContent(obj[key]) === false) return false;
+            } else {
+                const match = String(obj[key]).match(nonAcceptedSymbols);
+                if (match) {
+                    console.error('File content contains non accepted symbols:', match[0]);
+                    return false;
+                }
+            }
+        }
+        return true;
+    };
+
+    if (!checkContent(fileContent)) {
         return 'invalid-file-content';
     }
 
