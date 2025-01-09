@@ -111,7 +111,6 @@ ingredientNameInput.addEventListener('keydown', function (e) {
 });
 
 ipcRenderer.on('suggested-ingredient-clicked', (event, ingredientData) => {
-    console.log(ingredientData);
     isUpdateMode = true;
     addIngredientBtn.textContent = 'Update ingredient';
     ingredientNameInput.disabled = true;
