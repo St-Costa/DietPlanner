@@ -170,7 +170,9 @@ async function renderItemsTable(verboseIngredients, verboseProductName, verboseQ
     
     let sumCost = 0;
     for (let i = 0; i < verboseCost.length; i++) {
-        sumCost += parseFloat(verboseCost[i]);
+        if (!isNaN(parseFloat(verboseCost[i]))) {
+            sumCost += parseFloat(verboseCost[i]);
+        }
     }
 
     sumCost = sumCost.toFixed(2);
