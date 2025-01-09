@@ -157,23 +157,26 @@ async function renderRecipeTable () {
             // Request ingredient file content
             const ingredientData = await ipcRenderer.invoke('read-ingredient-file', ingredientName);
 
+
             // Compute ingredient details
-            let ingredientKcal = ingredientData.kcal * quantityGrams / 100;
-            let ingredientProtein = ingredientData.protein * quantityGrams / 100;
-            let ingredientFiber = ingredientData.fiber * quantityGrams / 100;
-            let ingredientFat = ingredientData.fat * quantityGrams / 100;
-            let ingredientSaturated = ingredientData.saturated * quantityGrams / 100;
-            let ingredientCarb = ingredientData.carb * quantityGrams / 100;
-            let ingredientSugar = ingredientData.sugar * quantityGrams / 100;
-            let ingredientSalt = ingredientData.salt * quantityGrams / 100;
-            let ingredientChol = ingredientData.chol * quantityGrams / 100;
-            let ingredientCost = ingredientData.unitWeight ? (ingredientData.cost * (quantityGrams / ingredientData.unitWeight)) : (ingredientData.cost * quantityGrams / 100);
+            let warningMissingIngredient = (ingredientData === 'file-not-found') ? `<div style='color: #ff5e00; font-size: 1.5em;display: inline-block;'>⚠</div>` : "";
+            let ingredientType = ingredientData.type || '-';
+            let ingredientKcal = isNaN(ingredientData.kcal) ? '-' : (ingredientData.kcal * quantityGrams / 100).toFixed(0);
+            let ingredientProtein = isNaN(ingredientData.protein) ? '-' : (ingredientData.protein * quantityGrams / 100).toFixed(0);
+            let ingredientFiber = isNaN(ingredientData.fiber) ? '-' : (ingredientData.fiber * quantityGrams / 100).toFixed(0);
+            let ingredientFat = isNaN(ingredientData.fat) ? '-' : (ingredientData.fat * quantityGrams / 100).toFixed(0);
+            let ingredientSaturated = isNaN(ingredientData.saturated) ? '-' : (ingredientData.saturated * quantityGrams / 100).toFixed(0);
+            let ingredientCarb = isNaN(ingredientData.carb) ? '-' : (ingredientData.carb * quantityGrams / 100).toFixed(0);
+            let ingredientSugar = isNaN(ingredientData.sugar) ? '-' : (ingredientData.sugar * quantityGrams / 100).toFixed(0);
+            let ingredientSalt = isNaN(ingredientData.salt) ? '-' : (ingredientData.salt * quantityGrams / 100).toFixed(2);
+            let ingredientChol = isNaN(ingredientData.chol) ? '-' : (ingredientData.chol * quantityGrams / 100).toFixed(0);
+            let ingredientCost = isNaN(ingredientData.cost) ? '-' : (ingredientData.unitWeight ? (ingredientData.cost * (quantityGrams / ingredientData.unitWeight)).toFixed(2) : (ingredientData.cost * quantityGrams / 100).toFixed(2));
 
             // Create a new row for the ingredient
             const newRow = document.createElement('tr');
             newRow.classList.add('ingredient-row'); // to distinguish from the sum row
             newRow.innerHTML = `
-                <td>${ingredientName}</td>
+                <td>${ingredientName} ${warningMissingIngredient}</td>
                 <td class="left">
                     <input type="number" id="gramsInput" value="${quantityGrams}" class="numberInput" step="0.1"> g
                     ${ingredientData.unitWeight ? `
@@ -184,17 +187,17 @@ async function renderRecipeTable () {
                         <span>${ingredientData.unitName}</span>
                     </div>` : ''}
                 </td>
-                <td class="center">${ingredientData.type}</td>
-                <td class="center">${ingredientKcal.toFixed(0)}</td>
-                <td class="center">${ingredientProtein.toFixed(0)}</td>
-                <td class="center">${ingredientFiber.toFixed(0)}</td>
-                <td class="center">${ingredientFat.toFixed(0)}</td>
-                <td class="center">${ingredientSaturated.toFixed(0)}</td>
-                <td class="center">${ingredientCarb.toFixed(0)}</td>
-                <td class="center">${ingredientSugar.toFixed(0)}</td>
-                <td class="center">${ingredientSalt.toFixed(2)}</td>
-                <td class="center">${ingredientChol.toFixed(0)}</td>
-                <td class="center">${ingredientCost.toFixed(2)}</td>
+                <td class="center">${ingredientType}</td>
+                <td class="center">${ingredientKcal}</td>
+                <td class="center">${ingredientProtein}</td>
+                <td class="center">${ingredientFiber}</td>
+                <td class="center">${ingredientFat}</td>
+                <td class="center">${ingredientSaturated}</td>
+                <td class="center">${ingredientCarb}</td>
+                <td class="center">${ingredientSugar}</td>
+                <td class="center">${ingredientSalt}</td>
+                <td class="center">${ingredientChol}</td>
+                <td class="center">${ingredientCost}</td>
                 <td><button class="removeIngredient deleteAddButton">x</button></td>
             `;
             dynamicTable.appendChild(newRow);
