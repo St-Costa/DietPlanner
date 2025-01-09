@@ -57,10 +57,16 @@ async function verbosifyIngredientsQuantitiesCost(ingredientsArray, quantitiesAr
     let verboseProductName = [];
 
     for (let i = 0; i < ingredientsArray.length; i++) {
-        verboseIngredients.push(String(ingredientsArray[i]));
-    
         let ingredientData = await ipcRenderer.invoke('read-ingredient-file', ingredientsArray[i]);
         let quantityGrams = quantitiesArray[i];
+
+        // ingredient name
+        if(ingredientData === 'file-not-found'){
+            verboseIngredients.push(String(ingredientsArray[i]) + ` <div style='color: #ff5e00; font-size: 1.5em;display: inline-block;'>⚠</div>`);
+        }
+        else{
+            verboseIngredients.push(String(ingredientsArray[i]));
+        }
 
         // ingredient info
         let unitWeight = ingredientData.unitWeight;
@@ -68,7 +74,10 @@ async function verbosifyIngredientsQuantitiesCost(ingredientsArray, quantitiesAr
         let cost = ingredientData.cost;
 
         // Product Name
-        if (ingredientData.unitName !== "") {
+        if (ingredientData === 'file-not-found') {
+            verboseProductName.push("");
+        }
+        else if (ingredientData.unitName !== "") {
             verboseProductName.push(unitName);
         }
         else {
@@ -76,7 +85,10 @@ async function verbosifyIngredientsQuantitiesCost(ingredientsArray, quantitiesAr
         }
 
         // Cost
-        if(ingredientData.unitWeight !== "") {
+        if (ingredientData === 'file-not-found') {
+            verboseCost.push( "-" );
+        }
+        else if(ingredientData.unitWeight !== "") {
             const finalCost = (cost * quantityGrams / unitWeight).toFixed(2);
             verboseCost.push( String( finalCost ) + ' ¤' );
         }
@@ -86,7 +98,10 @@ async function verbosifyIngredientsQuantitiesCost(ingredientsArray, quantitiesAr
         }
 
         // Quantity
-        if (unitWeight !== "") {
+        if (ingredientData === 'file-not-found') {
+            verboseQuantities.push( String( quantityGrams.toFixed(2) ) + ' g' );
+        }
+        else if (unitWeight !== "") {
             const finalQuantity = (quantityGrams / unitWeight).toFixed(2);
             verboseQuantities.push( '×' + String( finalQuantity ) + ' (' + String( quantityGrams.toFixed(2) ) + ' g)' );
         }
@@ -136,7 +151,6 @@ async function renderItemsTable(verboseIngredients, verboseProductName, verboseQ
         const productName = verboseProductName[i];
         const quantity = verboseQuantities[i];
         const cost = verboseCost[i];
-
 
         // Create a new row for the ingredient
         const newRow = document.createElement('tr');
