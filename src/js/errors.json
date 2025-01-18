@@ -39,8 +39,6 @@
         "message": "An error occurred while reading the file!"
     },
 
-    
-
     "generic_failure": {
         "type": false,
         "message": "An error occurred!"

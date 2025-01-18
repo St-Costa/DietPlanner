@@ -93,10 +93,10 @@
         <tr>
             <td><input type="text" id="ingredientName" /><div id="suggestionBox_ingredient" class="suggestionBox"></div></td>
             <td id="tdQuantityInput" class="left">
-                <input type="number" id="quantityGrams" class="numberInput" step="0.1"> g
+                <input type="number" id="ingredientToAdd_quantityGrams" class="numberInput" step="0.1"> g
                 <div id="unitAlternative" style="display: inline;">
                     ||
-                    <input class="numberInput" type="number" id="quantityUnit" placeholder="[0,∞]" min="0" step="0.01" oninput="validity.valid||(value='');"> 
+                    <input class="numberInput" type="number" id="ingredientToAdd_quantityUnit" placeholder="[0,∞]" min="0" step="0.01" oninput="validity.valid||(value='');"> 
                     of 
                     <span id="unitName">(unit name)</span>
                 </div>
