@@ -29,3 +29,8 @@ const pantryBtn = document.getElementById('modifyPantry');
 pantryBtn.addEventListener('click', function (event) {
     ipcRenderer.send('open-pantry-window');
 });
+
+const addDailyPlanBtn = document.getElementById('addDailyPlan');
+addDailyPlanBtn.addEventListener('click', function (event) {
+    ipcRenderer.send('open-add-daily-plan-window');
+});

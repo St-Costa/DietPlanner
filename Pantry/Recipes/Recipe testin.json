@@ -2,13 +2,11 @@
   "recipeName": "Recipe testin",
   "ingredientsArray": [
     "Broccolo",
-    "Chicken breast",
     "SPAR Vital - kidneybohnen"
   ],
   "quantitiesArray": [
     111,
-    100,
-    111
+    240
   ],
   "preparationText": "Testing preparation"
 }

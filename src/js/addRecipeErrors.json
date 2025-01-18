@@ -1,0 +1,18 @@
+{
+    "empty_recipe_name": {
+        "type": false,
+        "message": "Recipe name cannot be empyy!"
+    },
+    "empty_ingredient_name": {
+        "type": false,
+        "message": "Ingredient name cannot be empty!"
+    },
+    "invalid_ingredient_quantity": {
+        "type": false,
+        "message": "Invalid ingredient quantity!"
+    },
+    "ingredient_already_in_recipe": {
+        "type": false,
+        "message": "Ingredient is already in the recipe!"
+    }
+}

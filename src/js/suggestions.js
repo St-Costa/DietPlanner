@@ -3,27 +3,40 @@ const { ipcRenderer } = require('electron');
 module.exports = {
     showSuggestions: async function showSuggestions(suggestionType, suggestionBox, inputElement, targetWindowId) {
         let suggestions = [];
+
+        let getFilesResult = {};
+        let readingResultJSON = {};
         let allFiles = [];
 
         // Compute suggestions
         switch (suggestionType) {
             case 'ingredient':
-                allFiles = await ipcRenderer.invoke('get-ingredient-names');
+                getFilesResult = await ipcRenderer.invoke('get-ingredient-names');
                 break;
             case 'type':
-                allFiles = await ipcRenderer.invoke('get-ingredient-types');
+                getFilesResult  = await ipcRenderer.invoke('get-ingredient-types');
                 break;
             case 'recipe':
-                allFiles = await ipcRenderer.invoke('get-recipe-names');
+                getFilesResult = await ipcRenderer.invoke('get-recipe-names');
+                break;
+            case 'dailyPlan':
+                getFilesResult = await ipcRenderer.invoke('get-dailyPlan-names');
                 break;
             default:
-                console.log('Invalid suggestion type: ' + suggestionType);
+                console.log('[showSuggestions] -> Invalid suggestion type: ' + suggestionType);
         }
 
-        if(allFiles.length === 0) return;
-        
+        // Unpack JSON return of the invoke
+        [readingResultJSON, allFiles] =  Object.values(getFilesResult);
+
+        // If error occured
+        if(readingResultJSON.type === false){
+            return;
+        }
+
         const input = inputElement.value.toLowerCase();
         suggestions = allFiles.filter(name => name.toLowerCase().includes(input));
+        
 
         // Show suggestions
         suggestionBox.innerHTML = '';
@@ -40,24 +53,38 @@ module.exports = {
                 inputElement.value = suggestion;
                 suggestionBox.innerHTML = '';
 
-                let itemData = {};
+                let readFileResult = {};
+                let readResultJSON = {};
+                let itemDataJSON = {};
 
                 switch (suggestionType) {
                     case 'ingredient':
                         // Request file content
-                        itemData = await ipcRenderer.invoke('read-ingredient-file', suggestion);
-                        ipcRenderer.send('suggestion-clicked', {itemData, suggestionType, targetWindowId});
+                        readFileResult = await ipcRenderer.invoke('read-ingredient-file', suggestion);
                         break;
                     case 'type':
                         //console.log("Type suggestion clicked: no need to do anything");
                         break;
                     case 'recipe':
                         // Request file content
-                        itemData = await ipcRenderer.invoke('read-recipe-file', suggestion);
-                        ipcRenderer.send('suggestion-clicked', {itemData, suggestionType, targetWindowId});
+                        readFileResult = await ipcRenderer.invoke('read-recipe-file', suggestion);
+                        break;
+                    case 'dailyPlan':
+                        // Request file content
+                        readFileResult = await ipcRenderer.invoke('read-dailyPlan-file', suggestion);
                         break;
                     default:
-                        console.log('Invalid suggestion type: ' + suggestionType);
+                        console.log('[showSuggestions] -> Invalid suggestion type: ' + suggestionType);
+                }
+
+                // Unpack JSON return of the invoke
+                [readResultJSON, itemDataJSON] = Object.values(readFileResult);
+
+                if(readResultJSON.type){
+                    ipcRenderer.send('suggestion-clicked', {itemDataJSON, suggestionType, targetWindowId});
+                }
+                else{
+                    console.log("[showSuggestions] -> Error with suggestion: " + suggestion);
                 }
                 
             });

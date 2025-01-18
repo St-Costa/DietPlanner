@@ -3,9 +3,13 @@ const path = require('path');
 const url = require('url');
 const fs = require('fs');
 
+
+const errorsJSON = require('./errors.json');
+const successJSON = require('./success.json');
+
+
 // List of views
 let indexView;
-let addIngredientView;
 
 function createWindow () {
     indexView = new BrowserWindow({
@@ -45,6 +49,26 @@ app.on('activate', () => {
     }
 });
 
+ipcMain.on('open-add-daily-plan-window', (event, arg) => {
+    let addDailyPlanView = new BrowserWindow({
+        width: 1500,
+        height: 760,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+            enableRemoteModule: true
+        }
+    });
+
+    addDailyPlanView.loadURL(url.format({
+        pathname: path.join(__dirname, '../views/addDailyPlan.html'),
+        protocol: 'file:',
+        slashes: true
+    }));
+
+    addDailyPlanView.webContents.openDevTools();
+});
+
 // Add ingredient window
 ipcMain.on('open-add-ingredient-window', (event, arg) => {
     let addIngredientView = new BrowserWindow({
@@ -76,7 +100,7 @@ ipcMain.on('open-add-ingredient-window', (event, arg) => {
 });
 
 ipcMain.on('suggestion-clicked', (event, arg) => {
-    const {itemData, suggestionType, targetWindowId} = arg;
+    const [itemData, suggestionType, targetWindowId] = Object.values(arg);
 
     if(suggestionType === 'ingredient') {
         BrowserWindow.fromId(targetWindowId).webContents.send('suggested-ingredient-clicked', itemData);   
@@ -84,10 +108,12 @@ ipcMain.on('suggestion-clicked', (event, arg) => {
     else if(suggestionType === 'recipe') {
         BrowserWindow.fromId(targetWindowId).webContents.send('suggested-recipe-clicked', itemData);
     }
-    else {
-        console.error('Invalid suggestion type:', suggestionType);
+    else if(suggestionType === 'dailyPlan') {
+        BrowserWindow.fromId(targetWindowId).webContents.send('suggested-dailyPlan-clicked', itemData);
     }
-    
+    else {
+        console.error('[suggestion-clicked] -> Invalid suggestion type:', suggestionType);
+    }
 });
 
 ipcMain.handle('get-window-id', (event) => {
@@ -235,7 +261,7 @@ async function createFile(filePath, fileContent) {
             } else {
                 const match = String(obj[key]).match(nonAcceptedSymbols);
                 if (match) {
-                    console.error('File content contains non accepted symbols:', match[0]);
+                    console.error('[createFile] -> File content contains non accepted symbols:', match[0]);
                     return false;
                 }
             }
@@ -244,21 +270,21 @@ async function createFile(filePath, fileContent) {
     };
 
     if (!checkContent(fileContent)) {
-        return 'invalid-file-content';
+        return errorsJSON.invalid_file_content;
     }
 
 
     if (fs.existsSync(filePath)) {
-        console.error('File already exists:', filePath);
-        return 'file-exists';
+        console.error('[createFile] -> File already exists:', filePath);
+        return errorsJSON.file_already_exists;
     } else {
         try {
             await fs.promises.writeFile(filePath, JSON.stringify(fileContent, null, 2));
-            console.log('File created successfully');
-            return 'create-file-success';
+            console.log('[createFile] -> File created successfully');
+            return successJSON.file_created;
         } catch (err) {
-            console.error('Failed to create file:', err);
-            return 'create-file-failure';
+            console.error('[createFile] -> Failed to create file:', err);
+            return errorsJSON.file_not_created;
         }
     }
 }
@@ -274,17 +300,23 @@ ipcMain.handle('read-ingredient-file', async (event, ingredientName) => {
 
 // Reading file content
 async function readJsonFile(filePath) {
+    let resultJSON = {};
+    // Read the file
     try {
         const data = await fs.promises.readFile(filePath, 'utf8');
-        return JSON.parse(data);
-    } catch (err) {
-        console.error('Failed to read file:', err);
+        const dataJSON = JSON.parse(data);
+        resultJSON = successJSON.file_read;
+        return {resultJSON, dataJSON};
+    }
+    catch (err) {
+        console.error('[readJsonFile] -> Failed to read file:', err);
         if(err.code === 'ENOENT') {
-            return 'file-not-found';
+            resultJSON = errorsJSON.file_not_found;
         }
         else{
-            return 'failure';
+            resultJSON = errorsJSON.generic_failure;
         }
+        return {resultJSON, dataJSON: ''};
     }   
 }
 
@@ -303,7 +335,7 @@ ipcMain.handle('get-recipes-using-ingredient', async (event, ingredient) => {
                 recipesUsingIngredient.push(recipe);
             }
         } catch (err) {
-            console.error(`Failed to read recipe file for ${recipe}:`, err);
+            console.error(`[get-recipes-using-ingredient] -> Failed to read recipe file for ${recipe}:`, err);
         }
     }
 
@@ -329,22 +361,29 @@ ipcMain.handle('delete-recipe', async (event, recipe) => {
 
 async function deleteFile(filePath) {
     if (!fs.existsSync(filePath)) {
-        console.error('File does not exist:', filePath);
-        return 'file-not-found';
+        console.error('[deleteFile] -> File does not exist:', filePath);
+        return errorsJSON.file_not_found;
     }
     try {
         await fs.promises.unlink(filePath);
-        console.log('File deleted successfully');
-        return 'delete-file-success';
+        console.log('[deleteFile] -> File deleted successfully');
+        return successJSON.file_deleted;
     } catch (err) {
-        console.error('Failed to delete file:', err);
-        return 'delete-file-failure';
+        console.error('[deleteFile] -> Failed to delete file:', err);
+        return errorsJSON.delete_file_error;
     }
 }
 
 /*** READ ALL FILE */
 ipcMain.handle('get-recipe-names', async (event) => {
     const directoryPath = path.join(__dirname, '../../Pantry/Recipes');
+    const readFilesResult = await readFilesNameFromDirectory(directoryPath);
+    console.log("[get-recipe-names] -> ", readFilesResult);
+    return readFilesResult;
+});
+
+ipcMain.handle('get-dailyPlan-names', async (event) => {
+    const directoryPath = path.join(__dirname, '../../Pantry/DailyPlans');
     return readFilesNameFromDirectory(directoryPath);
 });
 
@@ -357,16 +396,22 @@ async function readFilesNameFromDirectory(directoryPath) {
     try {
         const files = await fs.promises.readdir(directoryPath);
         const fileNames = files.map(file => path.parse(file).name);
-        return fileNames;
+        return {resultJSON: successJSON.file_read, data: fileNames};
     } catch (err) {
-        console.error('Failed to read directory:', err);
-        return [];
+        console.error('[readFilesNameFromDirectory] -> Failed to read directory:', err);
+        return {resultJSON: errorsJSON.generic_failure, data: []};
     }
 }
 
 // IPC listener to read recipe file content
 ipcMain.handle('read-recipe-file', async (event, recipeName) => {
     const filePath = path.join(__dirname, '../../Pantry/Recipes', `${recipeName}.json`);
+    const readingResult = await readJsonFile(filePath);
+    return readingResult;
+});
+
+ipcMain.handle('read-dailyPlan-file', async (event, dailyPlanName) => {
+    const filePath = path.join(__dirname, '../../Pantry/DailyPlans', `${dailyPlanName}.json`);
     return readJsonFile(filePath);
 });
 
@@ -388,20 +433,27 @@ function refreshAllWindows(message) {
 }
 
 async function updateFile(filePath, fileContent) {
+    console.log('[updateFile] -> Updating file: ', filePath, ' with content: ', fileContent);
+
+    // Check if the file content is a string
     if (typeof fileContent !== 'string') {
         fileContent = JSON.stringify(fileContent, null, 2);
     }
+
+    // Check if the file exists
     if (!fs.existsSync(filePath)) {
-        console.error('File does not exist:', filePath);
-        return 'file-not-found';
+        console.log('[updateFile] -> File does not exist:', filePath);
+        return errorsJSON.file_not_found;
     }
+
+    // Try to overwrite the file
     try {
         await fs.promises.writeFile(filePath, fileContent);
-        console.log('File updated successfully');
-        return 'file-update-success';
+        console.log('[updateFile] -> File updated successfully');
+        return successJSON.file_updated;
     } catch (err) {
-        console.error('Failed to update file:', err);
-        return 'file-update-failure';
+        console.log('[updateFile] -> Failed to update file:', err);
+        return errorsJSON.file_not_updated;
     }
 }
 
@@ -423,69 +475,165 @@ ipcMain.handle('get-ingredient-types', async () => {
 });
 
 
-
-
-// IPC listener to create or update recipe file
-ipcMain.handle('add-ingredient-to-recipe', async (event, recipeAndIngredient) => {
-    const { recipeName, ingredientName, ingredientQuantity } = recipeAndIngredient;
+ipcMain.handle('recipe-nutritional-values', async (event, recipeName) => {
     const filePath = path.join(__dirname, '../../Pantry/Recipes', `${recipeName}.json`);
+    const {readResultJSON, recipeData} = await readJsonFile(filePath);
+
+    // If there is an error reading the file
+    if(readResultJSON.type === false){
+        return {readResultJSON, recipeData};
+    }
+
+    const recipeNutritionalValuesJSON = await computeRecipeNutritionalValues(recipeData.ingredientsArray, recipeData.quantitiesArray);
+    return {readResultJSON, recipeNutritionalValuesJSON};
+});
+
+async function computeRecipeNutritionalValues (ingredientArray, quantityArray) {
+    let totalNutritionalValues = {
+        name: '',
+        type: '',
+        kcal: 0,
+        protein: 0,
+        fiber: 0,
+        fat: 0,
+        saturated: 0,
+        carb: 0,
+        sugar: 0,
+        salt: 0,
+        chol: 0,
+        cost: 0
+    };
+
+    // To read ingredients file
+    
+
+    for (let i = 0; i < ingredientArray.length; i++) {
+        const ingredientName = ingredientArray[i];
+        const quantity = quantityArray[i];
+
+        // Read ingredient data
+        const ingredientFilePath = path.join(__dirname, '../../Pantry/Ingredients', `${ingredientName}.json`);
+        const ingredientData = await readJsonFile(ingredientFilePath);
+        
+        // Ingredient file might be deleted
+        if(ingredientData === 'file-not-found') {
+            return errorsJSON.ingredient_not_found;
+        }
+        
+        totalNutritionalValues.kcal         += ingredientData.kcal      * quantity / 100;
+        totalNutritionalValues.protein      += ingredientData.protein   * quantity / 100;
+        totalNutritionalValues.fiber        += ingredientData.fiber     * quantity / 100;
+        totalNutritionalValues.fat          += ingredientData.fat       * quantity / 100;
+        totalNutritionalValues.saturated    += ingredientData.saturated * quantity / 100;
+        totalNutritionalValues.carb         += ingredientData.carb      * quantity / 100;
+        totalNutritionalValues.sugar        += ingredientData.sugar     * quantity / 100;
+        totalNutritionalValues.salt         += ingredientData.salt      * quantity / 100;
+        totalNutritionalValues.chol         += ingredientData.chol      * quantity / 100;
+        if(ingredientData.unitWeight !== "") {
+            totalNutritionalValues.cost     += ingredientData.cost      * quantity / ingredientData.unitWeight;
+        }
+        else {
+            totalNutritionalValues.cost     += ingredientData.cost      * quantity / 100;
+        }
+    }
+
+    return totalNutritionalValues;
+}
+
+
+
+
+
+
+ipcMain.handle('add-recipe-to-dailyplan', async (event, planAndRecipe) => {
+    const { planName, recipeName, recipeQuantity } = planAndRecipe;
+    const filePath = path.join(__dirname, '../../Pantry/DailyPlans', `${planName}.json`);
     
     let readingResult = await readJsonFile(filePath);
-    let recipeData = {};
+    let planData = {};
 
     // 'file-not-found' error is not possible here
     switch(readingResult) {
         case 'failure':
-            console.error('Failed to read file:', err);
-            return 'file-read-failure';
+            console.error('[add-recipe-to-dailyplan] -> Failed to read file:', filePath);
+            return errorsJSON.read_file_failure;
         default:
-            recipeData = readingResult;
+            console.error('[add-recipe-to-dailyplan] -> File read succesfully:', readingResult);
+            planData = readingResult;
     }
 
-    // Check if the ingredient is already in the recipe
-    if (recipeData.ingredientsArray.includes(ingredientName)) {
-        return 'ingredient-already-in-recipe';
+    // Check if the recipe is already in the plan
+    if (planData.recipesArray.includes(recipeName)) {
+        return errorsJSON.ingredient_already_in_recipe;
     }
 
     // Update the recipe
-    recipeData.ingredientsArray.push(ingredientName);
-    recipeData.quantitiesArray.push(ingredientQuantity);
+    planData.recipesArray.push(recipeName);
+    planData.quantitiesArray.push(recipeQuantity);
 
-    let overwriteResult = await updateFile(filePath, recipeData);
+    let overwriteResult = await updateFile(filePath, planData);
 
     return overwriteResult;
 });
 
-ipcMain.handle('update-or-create-recipe', async (event, updatedRecipeJSON) => {
-    const filePath = path.join(__dirname, '../../Pantry/Recipes', `${updatedRecipeJSON.recipeName}.json`);
-    const fileContent = updatedRecipeJSON;
+ipcMain.handle('update-or-create-file', async (event, updatedJSON, type) => {
+    let filePath = '';
+    switch (type) {
+        case 'ingredient':
+            filePath = path.join(__dirname, '../../Pantry/Ingredients', `${updatedJSON.ingredientName}.json`);
+            break;
+        case 'recipe':
+            filePath = path.join(__dirname, '../../Pantry/Recipes',     `${updatedJSON.recipeName}.json`);
+            break;
+        case 'dailyPlan':
+            filePath = path.join(__dirname, '../../Pantry/DailyPlans',  `${updatedJSON.planName}.json`);
+            break;
+    }
+    const fileContent = updatedJSON;
 
-    let readingResult = await readJsonFile(filePath);
-    switch (readingResult) {
-        case 'failure':
-            console.error('Failed to read file:', err);
-            return 'failure';
 
-        case 'file-not-found': // File does not exist -> create it
+    let result = await createOrUpdateFile(filePath, fileContent);
+    return result;
+});
+
+
+async function createOrUpdateFile(filePath, fileContent) {
+    const {readResultJSON, dataJSON} = await readJsonFile(filePath);
+
+    switch (readResultJSON) {
+        // Failed to read file
+        case errorsJSON.read_file_failure:
+            console.error('[createOrUpdateFile] -> Failed to read file:', filePath);
+            return {readResultJSON, dataJSON: ''};
+
+        // File does not exist -> create it
+        case successJSON.file_created: 
             let createResult = await createFile(filePath, fileContent);
-            if (createResult === 'success') {
-                return 'file-created';
+            
+            if (createResult.type === true) {
+                console.error('[createOrUpdateFile] -> File created!', filePath);
+                return {resultJSON: successJSON.file_created, fileContent}
             }
+            
             else {
-                return 'file-creation-failure';
+                console.error('[createOrUpdateFile] -> Failed to create file:', filePath);
+                return {resultJSON: errorsJSON.file_not_created, dataJSON: ''};
             }
 
-        default:    // File exists -> update it
+        // File exists -> update it
+        default:    
             let updateResult = await updateFile(filePath, fileContent);
             // 'file-not-found' error is not possible here
-            if (updateResult === 'success') {
-                return 'file-updated';
+            if (updateResult === successJSON.file_updated) {
+                console.error('[createOrUpdateFile] -> File updated!', filePath);
+                return {resultJSON: successJSON.file_updated, fileContent};
             }
             else {
-                return 'file-update-failure';
+                console.error('[createOrUpdateFile] -> Failed to update file:', filePath);
+                return {resultJSON: errorsJSON.file_not_updated, dataJSON: ''};
             }
     }
-});
+}
 
 /************************
  * PANTRY
@@ -501,8 +649,8 @@ ipcMain.handle('add-ingredient-to-pantry', async (event, ingredient) => {
 
     switch(readingResult) {
         case 'failure':
-            console.error('Failed to read file:', err);
-            return 'file-read-failure';
+            console.error('[add-ingredient-to-pantry] -> Failed to read file:', err);
+            return errorsJSON.read_file_failure;
         case 'file-not-found':
             fileContent = {
                 ingredientsArray: [],
@@ -511,7 +659,7 @@ ipcMain.handle('add-ingredient-to-pantry', async (event, ingredient) => {
             pantryData = fileContent;
             let resultCreation = await createFile(filePath, fileContent);     
             if (resultCreation === 'failure'){
-                return 'file-creation-failure';
+                return errorsJSON.file_not_created;
             }
             break;   
         default:
@@ -546,16 +694,16 @@ ipcMain.handle('update-pantry', async (event, updatedPantryJSON) => {
     // The pantry file must exist
     switch (readingResult) {
         case 'failure':
-            console.error('Failed to read file:', err);
-            return 'failure';
+            console.error('[update-pantry] -> Failed to read file:', err);
+            return errorsJSON.read_file_failure;
         default:    // File exists -> update it
             let updateResult = await updateFile(filePath, fileContent);
             // 'file-not-found' error is not possible here
             if (updateResult === 'success') {
-                return 'file-updated';
+                return successJSON.file_updated;
             }
             else {
-                return 'file-update-failure';
+                return errorsJSON.file_not_updated;
             }
     }
 });

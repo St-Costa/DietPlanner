@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/basic.css">
+    <link rel="stylesheet" href="../css/button.css">
+    <link rel="stylesheet" href="../css/table.css">
+    <link rel="stylesheet" href="../css/messageBox.css">
+    <link rel="stylesheet" href="../css/suggestionBox.css">
+    <link rel="stylesheet" href="../css/addDailyPlan.css">
+    <title>Add Daily Plan</title>
+</head>
+<body>
+
+    <h1>Add Daily Plan</h1>
+
+    <!-- Explanation box -->
+    <br>
+    <div class="explainingBox center">
+        <br>
+        ⚠ → The file of an ingredient used in the recipe is missing from the ingredients folder!
+    </div>
+    <br>
+    <div id="messageBox" class="center messageBox"></div>
+    <br>
+
+    <!-- Daily plan -->
+    <table>
+        <tr>
+            <th class="right noStyle bottom">Daily plan:</th>
+            <td colspan="2" class="left">
+                <input type="text" id="planName" class="bottom">
+                <div id="suggestionBox_plan" class="suggestionBox bottom"></div>
+                <button id="deletePlan" class="bottom">Delete plan</button>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="3" style="padding-top: 20px;"></td>
+        </tr>
+    </table>
+
+    <!-- Recipes table -->
+    <table id="recipeTable" class="table_border">
+
+        <colgroup>
+            <col span="1">
+            <col class="rightBorder leftBorder">
+            <col class="rightBorder">
+            <col span="8">
+            <col class="leftBorder">
+        </colgroup>
+        <thead>
+            <tr>
+                <th id="nameHeader" class="ordered">Recipe</th>
+                <th id="quantityHeader">Quantity</th>
+                <th id="kcalHeader" class="number ordered">Kcal<br></th>
+                <th id="proteinHeader" class="number ordered">Prot<br><span>(g)</span></th>
+                <th id="fiberHeader" class="number ordered">Fiber<br><span>(g)</span></th>
+                <th id="fatHeader" class="number ordered">Fat<br><span>(g)</span></th>
+                <th id="saturatedHeader" class="number ordered">Sat Fat<br><span>(g)</span></th>
+                <th id="carbHeader" class="number ordered">Carb<br><span>(g)</span></th>
+                <th id="sugarHeader" class="number ordered">Sugar<br><span>(g)</span></th>
+                <th id="saltHeader" class="number ordered">Salt<br><span>(g)</span></th>
+                <th id="cholHeader" class="number ordered">Chol<br><span>(mg)</span></th>
+                <th id="costHeader" class="number ordered">Cost<br><span>(€)</span></th>
+                <th class="thButton"></th>
+            </tr>
+        </thead>
+        <tbody id="dynamicTable">
+            <!-- Dynamic rows will be added here -->
+        </tbody>
+        
+        <!-- Recipe selection -->
+        <tr>
+            <td colspan="14" style="padding-top: 20px;"></td>
+        </tr>
+        <tr>
+            <td class="bottom left">Add recipe:</td>
+            <td colspan="13"></td>
+        </tr>
+        <tr>
+            <td><input type="text" id="recipeName" /><div id="suggestionBox_recipe" class="suggestionBox"></div></td>
+            <td>
+                <input type="number" id="quantityRecipe" class="numberInput" step="1">
+            </td>
+            <td class="center" id="kcalSuggestedRecipe"></td>
+            <td class="center" id="proteinSuggestedRecipe"></td>
+            <td class="center" id="fiberSuggestedRecipe"></td>
+            <td class="center" id="fatSuggestedRecipe"></td>
+            <td class="center" id="saturatedSuggestedRecipe"></td>
+            <td class="center" id="carbSuggestedRecipe"></td>
+            <td class="center" id="sugarSuggestedRecipe"></td>
+            <td class="center" id="saltSuggestedRecipe"></td>
+            <td class="center" id="cholSuggestedRecipe"></td>
+            <td class="center" id="costSuggestedRecipe"></td>
+            <td><button id="addButton">+</button></td>
+        </tr>
+    </table>
+
+    <script>
+        require('../js/addDailyPlan.js');
+    </script>
+</body>
+</html>
+

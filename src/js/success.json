@@ -1,0 +1,18 @@
+{
+    "file_created": {
+        "type": true,
+        "message": "File created successfully!"
+    },
+    "file_deleted": {
+        "type": true,
+        "message": "File deleted successfully!"
+    },
+    "file_updated": {
+        "type": true,
+        "message": "File updated successfully!"
+    },
+    "file_read": {
+        "type": true,
+        "message": "File read successfully!"
+    }
+}

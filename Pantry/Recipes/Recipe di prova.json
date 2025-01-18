@@ -1,0 +1,12 @@
+{
+  "recipeName": "Recipe di prova",
+  "ingredientsArray": [
+    "SPAR Vital - kidneybohnen",
+    "Broccolo"
+  ],
+  "quantitiesArray": [
+    304.8,
+    500
+  ],
+  "preparationText": "Testing preparation2"
+}

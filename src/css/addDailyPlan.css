@@ -1,0 +1,56 @@
+.numberInput {
+    width: 40px;
+}
+.longInput {
+    width: 80%;
+}
+
+/* Set the width of the table headers */
+#nameHeader {
+    width: 13%;
+}
+
+#quantityHeader {
+    width: 10%;
+}
+
+
+/* END */
+.table_border th {
+    background-color: #ff5e00;
+    text-align: center;
+
+    /* Make the table header non-selectable */
+    user-select: none;
+    -webkit-user-select: none; /* For Safari */
+    -moz-user-select: none; /* For Firefox */
+    -ms-user-select: none; /* For Internet Explorer/Edge */
+}
+
+
+
+/* Remove top and bottom borders for table rows */
+.table tr {
+    border-top: none;
+    border-bottom: none;
+}
+
+/* Remove arrows from number input */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+    appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.thButton {
+    width: 1%;
+}
+
+/* Starting css modified in js */
+#tdQuantityInput, #addIngredientButton {
+    display: none;
+}

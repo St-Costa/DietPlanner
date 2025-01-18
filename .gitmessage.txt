@@ -1,0 +1,12 @@
+[CE] Some description (max. 65 characters in this line):
+
+Start with a capital letter
+Use the imperative form (e.g. Fix, Implement, Remove, Activate, Disable, ...)
+Don't end with a period
+Extended description:
+
+Focus on motivation and intent -> WHY? HOW?
+DON'T tediously enumerating low level details -> WHAT? WHERE?
+Try to put yourself in the shoes of your reviewer (and your future self) and provide enough context.
+
+Type: DEV|FIX|TEST|TEST_FIX|PERF_FIX|SUPPORTABILITY|CLEANUP|REFACTOR
