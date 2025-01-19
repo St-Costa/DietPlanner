@@ -401,22 +401,36 @@ ipcMain.handle('get-recipes-using-ingredient', async (event, ingredient) => {
 
 ipcMain.handle('recipe-nutritional-values', async (event, recipeName) => {
     const filePath = path.join(__dirname, '../../Pantry/Recipes', `${recipeName}.json`);
-    const {readResultJSON, recipeData} = await readJsonFile(filePath);
-
-    // If there is an error reading the file
-    if(readResultJSON.type === false){
-        return {readResultJSON, recipeData};
+    try{
+        const recipeData                    = await readJsonFile(filePath);
+        const recipeNutritionalValuesJSON   = await computeRecipeNutritionalValues(recipeData.ingredientsArray, recipeData.quantitiesArray);
+        return recipeNutritionalValuesJSON;
     }
+    catch(err){
+        console.error(`[recipe-nutritional-values] -> `, err);
 
-    const recipeNutritionalValuesJSON = await computeRecipeNutritionalValues(recipeData.ingredientsArray, recipeData.quantitiesArray);
-    return {readResultJSON, recipeNutritionalValuesJSON};
+        // Send error message to renderer
+        event.sender.send('main-error', `Failed computing recipe nutritional values!`);
+    
+        // Throw error to renderer so it does not continue
+        throw err;
+    }
 });
 
 ipcMain.handle('get-recipe-names', async (event) => {
     const directoryPath = path.join(__dirname, '../../Pantry/Recipes');
-    const readFilesResult = await readFilesNameFromDirectory(directoryPath);
-    console.log("[get-recipe-names] -> ", readFilesResult);
-    return readFilesResult;
+    try{
+        return await readFilesNameFromDirectory(directoryPath);
+    }
+    catch(err){
+        console.error(`[get-recipe-names] -> `, err);
+
+        // Send error message to renderer
+        event.sender.send('main-error', `Failed reading recipe files!`);
+    
+        // Throw error to renderer so it does not continue
+        throw err;
+    }
 });
 
 
@@ -766,6 +780,7 @@ async function deleteFile(filePath) {
 
 async function readFilesNameFromDirectory(directoryPath) {
     try {
+        throw new Error('Test error');
         const files = await fs.promises.readdir(directoryPath);
         const fileNames = files.map(file => path.parse(file).name);
         return fileNames;
@@ -791,42 +806,48 @@ async function computeRecipeNutritionalValues (ingredientArray, quantityArray) {
         cost:       0
     };
 
-    // To read ingredients file
-    for (let i = 0; i < ingredientArray.length; i++) {
-        const ingredientName = ingredientArray[i];
-        const quantity = quantityArray[i];
+    try{
+        // To read ingredients file
+        for (let i = 0; i < ingredientArray.length; i++) {
+            const ingredientName    = ingredientArray[i];
+            const quantity          = quantityArray[i];
 
-        // Read ingredient data
-        const ingredientFilePath    = path.join(__dirname, '../../Pantry/Ingredients', `${ingredientName}.json`);
-        const ingredientData        = await readJsonFile(ingredientFilePath);
-        
-        // Ingredient file might be deleted
-        if(!ingredientData.readResultJSON.type){
-            return errorsJSON.ingredient_not_found;
-        }     
-
-        if(ingredientData === errorsJSON.file_not_found) {
+            // Read ingredient data
+            const ingredientFilePath    = path.join(__dirname, '../../Pantry/Ingredients', `${ingredientName}.json`);
             
-        }
-        
-        totalNutritionalValues.kcal         += ingredientData.kcal      * quantity / 100;
-        totalNutritionalValues.protein      += ingredientData.protein   * quantity / 100;
-        totalNutritionalValues.fiber        += ingredientData.fiber     * quantity / 100;
-        totalNutritionalValues.fat          += ingredientData.fat       * quantity / 100;
-        totalNutritionalValues.saturated    += ingredientData.saturated * quantity / 100;
-        totalNutritionalValues.carb         += ingredientData.carb      * quantity / 100;
-        totalNutritionalValues.sugar        += ingredientData.sugar     * quantity / 100;
-        totalNutritionalValues.salt         += ingredientData.salt      * quantity / 100;
-        totalNutritionalValues.chol         += ingredientData.chol      * quantity / 100;
-        if(ingredientData.unitWeight !== "") {
-            totalNutritionalValues.cost     += ingredientData.cost      * quantity / ingredientData.unitWeight;
-        }
-        else {
-            totalNutritionalValues.cost     += ingredientData.cost      * quantity / 100;
-        }
-    }
+            // If file does not exists
+            // -> Don't return error
+            // -> Return a message
+            if (!fs.existsSync(ingredientFilePath)) {
+                return false;
+            }
 
-    return totalNutritionalValues;
+            const ingredientData        = await readJsonFile(ingredientFilePath);
+
+            totalNutritionalValues.kcal         += ingredientData.kcal      * quantity / 100;
+            totalNutritionalValues.protein      += ingredientData.protein   * quantity / 100;
+            totalNutritionalValues.fiber        += ingredientData.fiber     * quantity / 100;
+            totalNutritionalValues.fat          += ingredientData.fat       * quantity / 100;
+            totalNutritionalValues.saturated    += ingredientData.saturated * quantity / 100;
+            totalNutritionalValues.carb         += ingredientData.carb      * quantity / 100;
+            totalNutritionalValues.sugar        += ingredientData.sugar     * quantity / 100;
+            totalNutritionalValues.salt         += ingredientData.salt      * quantity / 100;
+            totalNutritionalValues.chol         += ingredientData.chol      * quantity / 100;
+
+            if(ingredientData.unitWeight !== "") {
+                totalNutritionalValues.cost     += ingredientData.cost      * quantity / ingredientData.unitWeight;
+            }
+            else {
+                totalNutritionalValues.cost     += ingredientData.cost      * quantity / 100;
+            }
+        }
+
+        return totalNutritionalValues;
+    }
+    catch(err){
+        console.error(`[computeRecipeNutritionalValues] -> `, err);
+        throw err;
+    }
 }
 
 
