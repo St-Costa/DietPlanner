@@ -1,10 +1,10 @@
-const { ipcRenderer } = require('electron');
-const { sortTable } = require('./tableSorting');
+const { ipcRenderer }   = require('electron');
+const { sortTable }     = require('./tableSorting');
 const { errorHandling } = require('./messageBoxUpdate');
 
-const ingredientTable = document.getElementById('ingredientTable').getElementsByTagName('tbody')[0];
-const typeFilterContainer = document.getElementById('typeFilterContainer');
-const messageBoxDiv = document.getElementById('messageBox');
+const ingredientTable       = document.getElementById('ingredientTable').getElementsByTagName('tbody')[0];
+const typeFilterContainer   = document.getElementById('typeFilterContainer');
+const messageBoxDiv         = document.getElementById('messageBox');
 
 // Add event listeners for sorting
 document.getElementById('nameHeader').addEventListener('click', function() { sortTable(ingredientTable, 0); });
@@ -20,17 +20,17 @@ document.getElementById('saltHeader').addEventListener('click', function() { sor
 document.getElementById('cholHeader').addEventListener('click', function() { sortTable(ingredientTable,10); });
 document.getElementById('costHeader').addEventListener('click', function() { sortTable(ingredientTable,11); });
 
+
+
 // Open add ingredient page
 const addIngredientBtn = document.getElementById('to_addIngredientPage');
-
-// Open add ingredient window
 addIngredientBtn.addEventListener('click', function (event) {
     ipcRenderer.send('open-add-ingredient-window');
 });
 
 
 
-// For when I create an ingredient in the other view
+// Refresh the list when an ingredient is created/deleted in another page
 ipcRenderer.on('refresh', (event, args) => {
     console.log("Refreshing because:", args);
     fetchAndRenderIngredients();
@@ -38,54 +38,99 @@ ipcRenderer.on('refresh', (event, args) => {
 
 
 
-// On opening of view, fetch and render recipes
+// Errors
+ipcRenderer.on('main-error', (event, errMsg) => {
+    errorHandling(messageBoxDiv, false, errMsg);
+});
+
+
+
+// On opening of view, fetch and render ingredients
 document.addEventListener('DOMContentLoaded', fetchAndRenderIngredients);
 
+
+
+// Render ingredients
 async function fetchAndRenderIngredients() {
-    try {
-        // Clear existing rows
-        while (ingredientTable.firstChild) {
-            ingredientTable.removeChild(ingredientTable.firstChild);
-        }
-        // Clear existing type filter buttons
-        while (typeFilterContainer.firstChild) {
-            typeFilterContainer.removeChild(typeFilterContainer.firstChild);
-        }
-
-        // Render ingredients in table
-        ipcRenderer.invoke('get-ingredient-names').then((ingredientData) => {
-            // Read information from each recipe file
-            ingredientData.forEach(ingredient => {
-                ipcRenderer.invoke('read-ingredient-file', ingredient).then(async (ingredientData) => {
-                    await renderTableRow(ingredientData);
-                });
-            });
-        });
-
-        // Render types button
-        ipcRenderer.invoke('get-ingredient-types').then((types) => {
-            const allButton = document.createElement('button');
-            allButton.textContent = 'All types';
-            allButton.addEventListener('click', () => {
-                filterByType("");
-            });
-            typeFilterContainer.appendChild(allButton);
-
-            types.forEach(type => {
-                const button = document.createElement('button');
-                button.textContent = type;
-                button.addEventListener('click', () => {
-                    filterByType(type);
-                });
-                typeFilterContainer.appendChild(button);
-            });
-        });
-
+    clearTableAndTypes();
+    
+    // Fetch all ingredients
+    let ingredientList = [];
+    try{
+        ingredientList = await ipcRenderer.invoke('get-ingredient-names');
     }
-    catch (err) {
-        console.error("Failed to fetch and render recipes:", err);
+    catch(err){
+        console.error(err);
+        return;
+    }
+
+
+    // Render ingredients
+    for (const ingredient of ingredientList) {
+        try{
+            const ingredientData = await ipcRenderer.invoke('read-ingredient-file', ingredient);
+            await renderTableRow(ingredientData);
+        }
+        catch(err){
+            console.error(err);
+            return;
+        }
+    }
+
+    // Type buttons to filter
+    renderTypeButtons();
+}
+
+
+
+async function renderTypeButtons() {
+    
+    // Get all ingredients types
+    let typeList = [];
+    try{
+        typeList = await ipcRenderer.invoke('get-ingredient-types');
+    }
+    catch(err){
+        console.error(err);
+        return;
+    }
+
+
+    // Add "All types" button
+    const allButton = document.createElement('button');
+    allButton.textContent = 'All types';
+    allButton.addEventListener('click', () => {
+        filterByType("");
+    });
+    typeFilterContainer.appendChild(allButton);
+
+
+    // Add buttons for each type
+    typeList.forEach(type => {
+        const button = document.createElement('button');
+        button.textContent = type;
+        button.addEventListener('click', () => {
+            filterByType(type);
+        });
+        typeFilterContainer.appendChild(button);
+    });
+}
+
+
+
+function clearTableAndTypes() {
+    // Clear ingredients
+    while (ingredientTable.firstChild) {
+        ingredientTable.removeChild(ingredientTable.firstChild);
+    }
+
+    // Clear type filter buttons
+    while (typeFilterContainer.firstChild) {
+        typeFilterContainer.removeChild(typeFilterContainer.firstChild);
     }
 }
+
+
 
 async function renderTableRow(ingredientData) {
     const newRow = document.createElement('tr');
@@ -110,27 +155,39 @@ async function renderTableRow(ingredientData) {
 
     // Delete behaviour
     const deleteButton = newRow.querySelector('#deleteButton');
-
     deleteButton.addEventListener('mouseover', () => {
         newRow.querySelector('#ingredientName').style.color = '#ff5e00';
     });
     deleteButton.addEventListener('mouseout', () => {
         newRow.querySelector('#ingredientName').style.color = '';
     });
-
     deleteButton.addEventListener('click', async () => {
-        const recipedUsingIngredient = await ipcRenderer.invoke('get-recipes-using-ingredient', ingredientData.name);
-        if (recipedUsingIngredient.length > 0) {
-            deletingIngredientPrompt(ingredientData.name, recipedUsingIngredient);
+        
+        // Check if recipes use the ingredient
+        // If yes => prompt user
+        // If no => delete ingredient
+        try{
+
+            // Get recipes using ingredient
+            const recipedUsingIngredient = await ipcRenderer.invoke('get-recipes-using-ingredient', ingredientData.name);
+            if (recipedUsingIngredient.length > 0) { // Some recipes use the ingredient
+                deletingIngredientPrompt(ingredientData.name, recipedUsingIngredient);
+            }
+            else{
+                deleteIngredient(ingredientData.name);
+            }
+
         }
-        else{
-            const resultOfDeletion = await ipcRenderer.invoke('delete-ingredient', ingredientData.name);
-            errorHandling(messageBoxDiv, resultOfDeletion);
+        catch(err){
+            console.error(err);
+            return;
         }
     });
 
     ingredientTable.appendChild(newRow);
 }
+
+
 
 async function filterByType(type) {
     const rows = ingredientTable.getElementsByTagName('tr');
@@ -144,12 +201,14 @@ async function filterByType(type) {
     }
 }
 
+
+
 function deletingIngredientPrompt(ingredientName, recipeList){
-    let boxColor = "#ffc685";
-    messageBoxDiv.style.color = boxColor;
-    messageBoxDiv.style.border = '1px solid ' + boxColor;
-    messageBoxDiv.style.fontWeight = 'bold';
-    messageBoxDiv.style.height = 'fit-content';
+    let boxColor                    = "#ffc685";
+    messageBoxDiv.style.color       = boxColor;
+    messageBoxDiv.style.border      = '1px solid ' + boxColor;
+    messageBoxDiv.style.fontWeight  = 'bold';
+    messageBoxDiv.style.height      = 'fit-content';
 
 
     messageBoxDiv.innerHTML = `
@@ -160,19 +219,17 @@ function deletingIngredientPrompt(ingredientName, recipeList){
         <div style="text-align: center;">Are you sure?</div>
     `;
 
-    // Add buttons
+    // Yes button
     const yesButton = document.createElement('button');
     yesButton.textContent = 'Yes';
     yesButton.addEventListener('click', async () => {
-        const resultOfDeletion = await ipcRenderer.invoke('delete-ingredient', ingredientName);
-        //await fetchAndRenderIngredients();
-        messageBoxDiv.textContent = '';
-        messageBoxDiv.style.color = "";
-        messageBoxDiv.style.border = '1px none';
-
-        errorHandling(messageBoxDiv, resultOfDeletion);
+        deleteIngredient(ingredientName);
+        messageBoxDiv.textContent   = '';
+        messageBoxDiv.style.color   = "";
+        messageBoxDiv.style.border  = '1px none';
     });
 
+    // No button
     const noButton = document.createElement('button');
     noButton.textContent = 'No';
     noButton.addEventListener('click', () => {
@@ -183,4 +240,14 @@ function deletingIngredientPrompt(ingredientName, recipeList){
 
     messageBoxDiv.appendChild(yesButton);
     messageBoxDiv.appendChild(noButton);
+}
+
+async function deleteIngredient(ingredientName){
+    try{
+        await ipcRenderer.invoke('delete-ingredient', ingredientName);
+        errorHandling(messageBoxDiv, true, 'Ingredient deleted succesfully!');
+    }
+    catch(err){
+        console.error(err);
+    }
 }

@@ -133,22 +133,57 @@ ipcMain.on('open-ingredient-list-window', (event, arg) => {
 
 ipcMain.handle('get-ingredient-names', async (event) => {
     const directoryPath = path.join(__dirname, '../../Pantry/Ingredients');
-    return readFilesNameFromDirectory(directoryPath);
+    try{
+        return await readFilesNameFromDirectory(directoryPath);
+    }
+    catch(err){
+        console.error(`[get-ingredient-names] -> `, err);
+
+        // Send error message to renderer
+        event.sender.send('main-error', `Failed reading ingredient files!`);
+    
+        // Throw error to renderer so it does not continue
+        throw err;
+    }
 });
 
 ipcMain.handle('read-ingredient-file', async (event, ingredientName) => {
     const filePath = path.join(__dirname, '../../Pantry/Ingredients', `${ingredientName}.json`);
-    return readJsonFile(filePath);
+    try{
+        return await readJsonFile(filePath);
+    }
+    catch(err){
+        console.error(`[read-ingredient-file] -> `, err);
+
+        // Send error message to renderer
+        event.sender.send('main-error', `Failed reading ingredient file: ${ingredientName}!`);
+
+        // Throw error to renderer so it does not continue
+        throw err;
+    }
 });
 
 ipcMain.handle('delete-ingredient', async (event, ingredient) => {
     const filePath = path.join(__dirname, '../../Pantry/Ingredients', `${ingredient}.json`);
-    let resultOfDeletion = await deleteFile(filePath);
+    
+    try{
+        let resultOfDeletion = await deleteFile(filePath);
 
-    // Refresh all windows
-    refreshAllWindows('From delete-ingredient');
+        // Refresh all windows
+        refreshAllWindows('From delete-ingredient');
 
-    return resultOfDeletion;
+        return resultOfDeletion;
+    }
+    catch(err){
+        console.error(`[delete-ingredient] -> `, err);
+
+        // Send error message to renderer
+        event.sender.send('main-error', `Failed deleting ingredient file: ${ingredient}!`);
+
+        // Throw error to renderer so it does not continue
+        throw err;
+    }
+
 });
 
 ipcMain.handle('create-ingredient-file', async (event, ingredientName, ingredientData) => {
@@ -170,14 +205,44 @@ ipcMain.handle('update-ingredient-file', async (event, ingredientName, fileConte
     return result;
 });
 
-ipcMain.handle('get-ingredient-types', async () => {
+ipcMain.handle('get-ingredient-types', async (event) => {
     const directoryPath = path.join(__dirname, '../../Pantry/Ingredients');
-    const ingredientNames = await readFilesNameFromDirectory(directoryPath);
+    let ingredientNames = [];
+
+    // Get all ingredients names from the directory
+    try{
+        ingredientNames = await readFilesNameFromDirectory(directoryPath);    
+    }
+    catch(err){
+        console.error(`[get-ingredient-types] -> `, err);
+
+        // Send error message to renderer
+        event.sender.send('main-error', `Failed reading ingredient files!`);
+        // Throw error to renderer so it does not continue
+        throw err;
+    }
+
     const types = new Set();
 
     for (const ingredient of ingredientNames) {
         const filePath = path.join(__dirname, '../../Pantry/Ingredients', `${ingredient}.json`);
-        const data = await readJsonFile(filePath);
+        
+        // Read ingredient data
+        let data = {};
+        try{
+            data =  await readJsonFile(filePath);
+        }
+        catch(err){
+            console.error(`[get-ingredient-types] -> `, err);
+    
+            // Send error message to renderer
+            event.sender.send('main-error', `Failed reading ingredient file: ${ingredient}!`);
+    
+            // Throw error to renderer so it does not continue
+            throw err;
+        }
+        
+        // Add ingredient type if missing from the set
         if (data.type) {
             types.add(data.type);
         }
@@ -267,13 +332,33 @@ ipcMain.handle('read-recipe-file', async (event, recipeName) => {
     return readingResult;
 });
 
+
+
 ipcMain.handle('get-recipes-using-ingredient', async (event, ingredient) => {
     const directoryPath = path.join(__dirname, '../../Pantry/Recipes');
-    const recipeNames = await readFilesNameFromDirectory(directoryPath);
+
+    // Get all recipe names
+    let recipeNames = [];
+    try{
+        recipeNames =  await readFilesNameFromDirectory(directoryPath);
+    }
+    catch(err){
+        console.error(`[get-recipes-using-ingredient] -> `, err);
+    
+        // Send error message to renderer
+        event.sender.send('main-error', `Failed reading recipes files!`);
+    
+        // Throw error to renderer so it does not continue
+        throw err;
+    }
+
+
 
     let recipesUsingIngredient = [];
 
     for (const recipe of recipeNames) {
+
+        // Read the recipe file
         try {
             const filePath = path.join(__dirname, '../../Pantry/Recipes', `${recipe}.json`);
             const recipeData = await readJsonFile(filePath);
@@ -281,7 +366,12 @@ ipcMain.handle('get-recipes-using-ingredient', async (event, ingredient) => {
                 recipesUsingIngredient.push(recipe);
             }
         } catch (err) {
-            console.error(`[get-recipes-using-ingredient] -> Failed to read recipe file for ${recipe}:`, err);
+            console.error(`[get-recipes-using-ingredient] ->`, err);
+            // Send error message to renderer
+            event.sender.send('main-error', `Failed reading recipe files: ${recipe}!`);
+        
+            // Throw error to renderer so it does not continue
+            throw err;
         }
     }
 
@@ -629,39 +719,25 @@ async function createFile(filePath, fileContent) {
 
 
 async function readJsonFile(filePath) {
-    let resultJSON = {};
-    // Read the file
     try {
         const data = await fs.promises.readFile(filePath, 'utf8');
         const dataJSON = JSON.parse(data);
-        resultJSON = successJSON.file_read;
-        return {resultJSON, dataJSON};
+        return dataJSON;
     }
     catch (err) {
         console.error('[readJsonFile] -> Failed to read file:', err);
-        if(err.code === 'ENOENT') {
-            resultJSON = errorsJSON.file_not_found;
-        }
-        else{
-            resultJSON = errorsJSON.generic_failure;
-        }
-        return {resultJSON, dataJSON: ''};
+        throw err;
     }   
 }
 
 
 async function deleteFile(filePath) {
-    if (!fs.existsSync(filePath)) {
-        console.error('[deleteFile] -> File does not exist:', filePath);
-        return errorsJSON.file_not_found;
-    }
     try {
         await fs.promises.unlink(filePath);
-        console.log('[deleteFile] -> File deleted successfully');
-        return successJSON.file_deleted;
+        return true;
     } catch (err) {
-        console.error('[deleteFile] -> Failed to delete file:', err);
-        return errorsJSON.delete_file_error;
+        console.error('[deleteFile] -> ', err);
+        throw err;
     }
 }
 
@@ -669,10 +745,10 @@ async function readFilesNameFromDirectory(directoryPath) {
     try {
         const files = await fs.promises.readdir(directoryPath);
         const fileNames = files.map(file => path.parse(file).name);
-        return {resultJSON: successJSON.file_read, data: fileNames};
+        return fileNames;
     } catch (err) {
-        console.error('[readFilesNameFromDirectory] -> Failed to read directory:', err);
-        return {resultJSON: errorsJSON.generic_failure, data: []};
+        console.error('[readFilesNameFromDirectory] Error -> ', err);
+        throw err
     }
 }
 
