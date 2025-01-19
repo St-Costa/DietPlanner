@@ -1,13 +1,17 @@
 const { ipcRenderer }   = require('electron');
 const { errorHandling } = require('./messageBoxUpdate');
 
-let listType = '';
-let messageBox = '';
+let listType    = '';
+let messageBox  = '';
 
 module.exports = {
     renderTable : async function renderTable(tableList, table, messageBoxDiv){
         messageBox = messageBoxDiv;
-        
+            
+        // Clean table
+        table.innerHTML = '';
+
+        // Render table based on list type
         try{
             switch(tableList) {
                 case 'recipeList':
@@ -28,9 +32,6 @@ module.exports = {
 
 // recipeList.js
 async function renderRecipeListTable(table) {
-    // Clean table
-    table.innerHTML = '';
-
     // Render table
     try {
         // Fetch recipe names
