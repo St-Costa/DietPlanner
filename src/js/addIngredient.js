@@ -29,6 +29,13 @@ const inputs = [
     ingredientUnitWeightInput, ingredientUnitNameInput
 ];
 inputs.forEach(input => input.addEventListener('input', checkInputs));
+inputs.forEach(input => { // Trigger addIngredientBtn click on ENTER key press
+    input.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter' && !addIngredientBtn.disabled) {
+            addIngredientBtn.click();
+        }
+    });
+});
 
 
 // Suggestion boxes
@@ -165,7 +172,6 @@ ingredientTypeInput.addEventListener('keydown', function (e) {
 // When click outside input field, hide suggestion box
 // If the click is on the suggestion box, do not hide it
 ingredientTypeInput.addEventListener('blur', function(event) {
-    console.log(event);
     if (suggestionBox_name.contains(event.relatedTarget)) {
         suggestionBox_name.style.display = 'none';
     }

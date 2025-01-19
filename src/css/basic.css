@@ -44,3 +44,11 @@ h2 {
   text-decoration: none;
   background-color: transparent;
 }
+
+.inline{
+  display: inline;
+}
+
+.highlight {
+  color: #ff5e00;
+}
