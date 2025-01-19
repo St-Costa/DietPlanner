@@ -5,48 +5,49 @@ module.exports = {
         let suggestions = [];
 
         let getFilesResult = {};
-        let readingResultJSON = {};
-        let allFiles = [];
 
-        // Compute suggestions
-        switch (suggestionType) {
-            case 'ingredient':
-                getFilesResult = await ipcRenderer.invoke('get-ingredient-names');
-                break;
-            case 'type':
-                getFilesResult  = await ipcRenderer.invoke('get-ingredient-types');
-                break;
-            case 'recipe':
-                getFilesResult = await ipcRenderer.invoke('get-recipe-names');
-                break;
-            case 'dailyPlan':
-                getFilesResult = await ipcRenderer.invoke('get-dailyPlan-names');
-                break;
-            default:
-                console.log('[showSuggestions] -> Invalid suggestion type: ' + suggestionType);
+        try {
+
+            // Find all names of the files in the directory
+            switch (suggestionType) {
+                case 'ingredient':
+                    getFilesResult = await ipcRenderer.invoke('get-ingredient-names'); 
+                    break;
+                case 'type':
+                    getFilesResult  = await ipcRenderer.invoke('get-ingredient-types'); 
+                    break;
+                case 'recipe':
+                    getFilesResult = await ipcRenderer.invoke('get-recipe-names');
+                    break;
+                case 'dailyPlan':
+                    getFilesResult = await ipcRenderer.invoke('get-dailyPlan-names');
+                    break;
+                default:
+                    console.log('[showSuggestions] -> Invalid suggestion type: ' + suggestionType);
+            }
+            
+        }
+        catch(err){
+            console.error("[showSuggestions] -> Error while getting suggestions: ", err);
+            throw err;
         }
 
-        // Unpack JSON return of the invoke
-        [readingResultJSON, allFiles] =  Object.values(getFilesResult);
-
-        // If error occured
-        if(readingResultJSON.type === false){
-            return;
-        }
-
+        // Filter suggestions based on user input
         const input = inputElement.value.toLowerCase();
-        suggestions = allFiles.filter(name => name.toLowerCase().includes(input));
+        suggestions = getFilesResult.filter(name => name.toLowerCase().includes(input));
         
 
         // Show suggestions
-        suggestionBox.innerHTML = '';
+        suggestionBox.innerHTML     = '';
         suggestionBox.style.display = 'block';
-        currentFocus = -1;
+        currentFocus                = -1;
 
         suggestions.forEach(suggestion => {
-            const divSuggestion = document.createElement('div');
-            divSuggestion.style.width = inputElement.offsetWidth + 'px !important';
-            divSuggestion.textContent = suggestion;
+
+            // HTMl stuff to show the suggestions
+            const divSuggestion         = document.createElement('div');
+            divSuggestion.style.width   = inputElement.offsetWidth + 'px !important';
+            divSuggestion.textContent   = suggestion;
             
             
             divSuggestion.addEventListener('click', async function () {
@@ -57,34 +58,32 @@ module.exports = {
                 let readResultJSON = {};
                 let itemDataJSON = {};
 
-                switch (suggestionType) {
-                    case 'ingredient':
-                        // Request file content
-                        readFileResult = await ipcRenderer.invoke('read-ingredient-file', suggestion);
-                        break;
-                    case 'type':
-                        //console.log("Type suggestion clicked: no need to do anything");
-                        break;
-                    case 'recipe':
-                        // Request file content
-                        readFileResult = await ipcRenderer.invoke('read-recipe-file', suggestion);
-                        break;
-                    case 'dailyPlan':
-                        // Request file content
-                        readFileResult = await ipcRenderer.invoke('read-dailyPlan-file', suggestion);
-                        break;
-                    default:
-                        console.log('[showSuggestions] -> Invalid suggestion type: ' + suggestionType);
+                try{
+                    // Read the file content
+                    switch (suggestionType) {
+                        case 'ingredient':
+                            // Request file content
+                            readFileResult = await ipcRenderer.invoke('read-ingredient-file', suggestion);
+                            break;
+                        case 'type':
+                            //console.log("Type suggestion clicked: no need to do anything");
+                            break;
+                        case 'recipe':
+                            // Request file content
+                            readFileResult = await ipcRenderer.invoke('read-recipe-file', suggestion);
+                            break;
+                        case 'dailyPlan':
+                            // Request file content
+                            readFileResult = await ipcRenderer.invoke('read-dailyPlan-file', suggestion);
+                            break;
+                        default:
+                            console.log('[showSuggestions] -> Invalid suggestion type: ' + suggestionType);
+                    }      
+                    ipcRenderer.send('suggestion-clicked', {readFileResult, suggestionType, targetWindowId});                    
                 }
-
-                // Unpack JSON return of the invoke
-                [readResultJSON, itemDataJSON] = Object.values(readFileResult);
-
-                if(readResultJSON.type){
-                    ipcRenderer.send('suggestion-clicked', {itemDataJSON, suggestionType, targetWindowId});
-                }
-                else{
-                    console.log("[showSuggestions] -> Error with suggestion: " + suggestion);
+                catch(err){
+                    console.error("[showSuggestions] -> Error while reading file: ", err);
+                    throw err;
                 }
                 
             });
@@ -96,7 +95,7 @@ module.exports = {
         suggestionBox.style.width = `${rect.width}px`;
     },
 
-
+    // Navigate the suggestions with arrows and select with Enter
     navigateSuggestions: function navigateSuggestions(e, suggestionBox) {
         const suggestionItems = suggestionBox.getElementsByTagName('div');
         if (e.key === 'ArrowDown') {
@@ -115,14 +114,15 @@ module.exports = {
 
 }
 
-    // Remove 'autocomplete-active' class from all items in the list
-    function removeActive(items) {
-        for (let i = 0; i < items.length; i++) {
-            items[i].classList.remove('autocomplete-active');
-        }
-    }
 
-    // Adds 'autocomplete-active' class to the currently focused item in the list and adjusts the scroll position
+// Remove 'autocomplete-active' class from all items in the list
+function removeActive(items) {
+    for (let i = 0; i < items.length; i++) {
+        items[i].classList.remove('autocomplete-active');
+    }
+}
+
+// Adds 'autocomplete-active' class to the currently focused item in the list and adjusts the scroll position
 function addActive(items, suggestionBox) {
     if (!items) return false;
     removeActive(items);

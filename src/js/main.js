@@ -188,21 +188,42 @@ ipcMain.handle('delete-ingredient', async (event, ingredient) => {
 
 ipcMain.handle('create-ingredient-file', async (event, ingredientName, ingredientData) => {
     const filePath = path.join(__dirname, '../../Pantry/Ingredients', `${ingredientName}.json`);
-    let result = createFile(filePath, ingredientData);
-    // Refresh all windows
-    refreshAllWindows('From create-ingredient-file');
 
-    return result;
+    try{
+        await createFile(filePath, ingredientData);
+
+        // Refresh all windows
+        refreshAllWindows('From create-ingredient-file');
+    }
+    catch(err){
+        console.error(`[create-ingredient-file] -> `, err);
+    
+        // Send error message to renderer
+        event.sender.send('main-error', `Failed creating ingredient file: ${ingredientName}!`);
+    
+        // Throw error to renderer so it does not continue
+        throw err;
+    }
 });
 
 ipcMain.handle('update-ingredient-file', async (event, ingredientName, fileContent) => {
     const filePath = path.join(__dirname, '../../Pantry/Ingredients', `${ingredientName}.json`);
-    let result = updateFile(filePath, fileContent);
 
-    // Refresh all windows
-    refreshAllWindows('From update-ingredient-file');
+    try{
+        await updateFile(filePath, fileContent);
 
-    return result;
+        // Refresh all windows
+        refreshAllWindows('From update-ingredient-file');
+    }
+    catch(err){
+        console.error(`[update-ingredient-file] -> `, err);
+    
+        // Send error message to renderer
+        event.sender.send('main-error', `Failed updating ingredient file: ${ingredientName}!`);
+    
+        // Throw error to renderer so it does not continue
+        throw err;
+    }
 });
 
 ipcMain.handle('get-ingredient-types', async (event) => {
@@ -697,22 +718,24 @@ async function createFile(filePath, fileContent) {
         return true;
     };
 
+
     if (!checkContent(fileContent)) {
-        return errorsJSON.invalid_file_content;
+        throw new Error('File content contains non accepted symbols');
     }
 
-
+    // Check if the file already exists
     if (fs.existsSync(filePath)) {
         console.error('[createFile] -> File already exists:', filePath);
-        return errorsJSON.file_already_exists;
-    } else {
+        throw new Error('File already exists');
+    } 
+    
+    // File does not exists, create it
+    else {
         try {
             await fs.promises.writeFile(filePath, JSON.stringify(fileContent, null, 2));
-            console.log('[createFile] -> File created successfully');
-            return successJSON.file_created;
         } catch (err) {
-            console.error('[createFile] -> Failed to create file:', err);
-            return errorsJSON.file_not_created;
+            console.error('[createFile] -> ', err);
+            throw err;
         }
     }
 }
@@ -814,27 +837,18 @@ function refreshAllWindows(message) {
 }
 
 async function updateFile(filePath, fileContent) {
-    console.log('[updateFile] -> Updating file: ', filePath, ' with content: ', fileContent);
 
     // Check if the file content is a string
     if (typeof fileContent !== 'string') {
         fileContent = JSON.stringify(fileContent, null, 2);
     }
 
-    // Check if the file exists
-    if (!fs.existsSync(filePath)) {
-        console.log('[updateFile] -> File does not exist:', filePath);
-        return errorsJSON.file_not_found;
-    }
-
     // Try to overwrite the file
     try {
         await fs.promises.writeFile(filePath, fileContent);
-        console.log('[updateFile] -> File updated successfully');
-        return successJSON.file_updated;
     } catch (err) {
-        console.log('[updateFile] -> Failed to update file:', err);
-        return errorsJSON.file_not_updated;
+        console.error('[updateFile] -> ', err);
+        throw err;
     }
 }
 
