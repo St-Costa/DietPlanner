@@ -342,9 +342,24 @@ ipcMain.handle('create-recipe-file', async (event, recipeName, recipeData) => {
 
 ipcMain.handle('delete-recipe', async (event, recipe) => {
     const filePath = path.join(__dirname, '../../Pantry/Recipes', `${recipe}.json`);
-    let resultOfDeletion = deleteFile(filePath);
+    try{
+        let resultOfDeletion = await deleteFile(filePath);
 
-    return resultOfDeletion;
+        // Refresh all windows
+        refreshAllWindows('From delete-recipe');
+
+        return resultOfDeletion;
+    }
+    catch(err){
+        console.error(`[delete-recipe] -> `, err);
+
+        // Send error message to renderer
+        event.sender.send('main-error', `Failed deleting recipe file: ${recipe}!`);
+
+        // Throw error to renderer so it does not continue
+        throw err;
+    }
+
 });
 
 ipcMain.handle('read-recipe-file', async (event, recipeName) => {
@@ -780,7 +795,6 @@ async function deleteFile(filePath) {
 
 async function readFilesNameFromDirectory(directoryPath) {
     try {
-        throw new Error('Test error');
         const files = await fs.promises.readdir(directoryPath);
         const fileNames = files.map(file => path.parse(file).name);
         return fileNames;
@@ -822,7 +836,7 @@ async function computeRecipeNutritionalValues (ingredientArray, quantityArray) {
                 return false;
             }
 
-            const ingredientData        = await readJsonFile(ingredientFilePath);
+            const ingredientData                = await readJsonFile(ingredientFilePath);
 
             totalNutritionalValues.kcal         += ingredientData.kcal      * quantity / 100;
             totalNutritionalValues.protein      += ingredientData.protein   * quantity / 100;

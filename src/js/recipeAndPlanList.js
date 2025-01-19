@@ -1,10 +1,17 @@
 const { ipcRenderer }   = require('electron');
+const { errorHandling } = require('./messageBoxUpdate');
+
+let listType = '';
+let messageBox = '';
 
 module.exports = {
     renderTable : async function renderTable(tableList, table, messageBoxDiv){
+        messageBox = messageBoxDiv;
+        
         try{
             switch(tableList) {
                 case 'recipeList':
+                    listType = 'recipe';
                     await renderRecipeListTable(table);
                     break;
                 default:
@@ -13,6 +20,7 @@ module.exports = {
         }
         catch(err){
             console.error("[renderTable] -> ", err);
+            errorHandling(messageBox, false, "Error rendering table");
             throw err;
         }
     }
@@ -20,6 +28,10 @@ module.exports = {
 
 // recipeList.js
 async function renderRecipeListTable(table) {
+    // Clean table
+    table.innerHTML = '';
+
+    // Render table
     try {
         // Fetch recipe names
         const recipeList = await ipcRenderer.invoke('get-recipe-names');
@@ -65,11 +77,28 @@ async function renderTableRow(table, rowName, rowNutritionalValue) {
         <td>${isNaN(rowNutritionalValue.salt)        ? "-" : rowNutritionalValue.salt.toFixed(2)}</td>
         <td>${isNaN(rowNutritionalValue.chol)        ? "-" : rowNutritionalValue.chol.toFixed(0)}</td>
         <td>${isNaN(rowNutritionalValue.cost)        ? "-" : rowNutritionalValue.cost.toFixed(2)}</td>
-        <td><button class="deleteAddButton" id="openGroceryList">≡</button></td>
+        <td><button class="deleteAddButton" id="deleteRow">X</button> <button class="deleteAddButton" id="openGroceryList">≡</button></td>
     `;
 
     newRow.querySelector('#openGroceryList').addEventListener('click', function() {
         ipcRenderer.send('open-recipe-grocery-list-window', rowName);
+    });
+
+    newRow.querySelector('#deleteRow').addEventListener('click', async function() {
+        try {
+            switch(listType) {
+                case 'recipe':
+                    await ipcRenderer.invoke('delete-recipe', rowName);
+                    errorHandling(messageBox, true, "Recipe deleted successfully");
+                    break;
+                default:
+                    console.error("List type not recognized");
+            }
+        }
+        catch(err) {
+            console.error("[deleteButton] -> ", err);
+            throw err;
+        }
     });
 
     table.appendChild(newRow);

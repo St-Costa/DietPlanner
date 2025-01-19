@@ -1,6 +1,5 @@
 const { ipcRenderer }   = require('electron');
 const { sortTable }     = require('./tableSorting');
-const { errorHandling } = require('./messageBoxUpdate');
 const { renderTable }   = require('./recipeAndPlanList');
 
 
@@ -29,17 +28,12 @@ addRecipeBtn.addEventListener('click', function (event) {
     ipcRenderer.send('open-add-recipe-window');
 });
 
+// Refresh the list when a recipe is created/deleted in another page
+ipcRenderer.on('refresh', (event, args) => {
+    console.log("Refreshing because:", args);
+    renderTable('recipeList', recipeTable, messageBoxDiv)
+});
+
 
 // On opening of view, fetch and render recipes
-document.addEventListener('DOMContentLoaded', renderTableAndHandleErrors);
-
-async function renderTableAndHandleErrors() {
-    try {
-        await renderTable('recipeList', recipeTable, messageBoxDiv);
-    }
-    catch(err){
-        console.error("[renderTable] -> ", err);
-        errorHandling(messageBoxDiv, false, "Failed to render the table!");
-        throw err;
-    }
-}
+document.addEventListener('DOMContentLoaded', renderTable('recipeList', recipeTable, messageBoxDiv));
