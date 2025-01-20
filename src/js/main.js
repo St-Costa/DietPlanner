@@ -184,11 +184,14 @@ ipcMain.on('delete-ingredient', async (event, ingredient) => {
 
 });
 
-ipcMain.handle('create-ingredient-file', async (event, ingredientName, ingredientData) => {
+ipcMain.on('create-ingredient-file', async (event, ingredientName, ingredientData) => {
     const filePath = path.join(__dirname, '../../Pantry/Ingredients', `${ingredientName}.json`);
 
     try{
         await createFile(filePath, ingredientData);
+
+        // Send error message to renderer
+        event.sender.send('main-success', `Succesfully created ingredient file: ${ingredientName}!`);
 
         // Refresh all windows
         refreshAllWindows('From create-ingredient-file');
@@ -198,17 +201,17 @@ ipcMain.handle('create-ingredient-file', async (event, ingredientName, ingredien
     
         // Send error message to renderer
         event.sender.send('main-error', `Failed creating ingredient file: ${ingredientName}!`);
-    
-        // Throw error to renderer so it does not continue
-        throw err;
     }
 });
 
-ipcMain.handle('update-ingredient-file', async (event, ingredientName, fileContent) => {
+ipcMain.on('update-ingredient-file', async (event, ingredientName, fileContent) => {
     const filePath = path.join(__dirname, '../../Pantry/Ingredients', `${ingredientName}.json`);
 
     try{
         await updateFile(filePath, fileContent);
+
+        // Send success message to renderer
+        event.sender.send('main-success', `Succesfully updated ingredient file: ${ingredientName}!`);
 
         // Refresh all windows
         refreshAllWindows('From update-ingredient-file');
@@ -218,9 +221,6 @@ ipcMain.handle('update-ingredient-file', async (event, ingredientName, fileConte
     
         // Send error message to renderer
         event.sender.send('main-error', `Failed updating ingredient file: ${ingredientName}!`);
-    
-        // Throw error to renderer so it does not continue
-        throw err;
     }
 });
 

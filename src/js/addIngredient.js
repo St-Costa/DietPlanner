@@ -53,6 +53,10 @@ let isUpdateMode = false;
 ipcRenderer.on('main-error', (event, errMsg) => {
     errorHandling(messageBox, false, errMsg);
 });
+// Success
+ipcRenderer.on('main-success', (event, errMsg) => {
+    errorHandling(messageBox, true, errMsg);
+});
 
 
 // Function to check if all inputs are filled
@@ -215,23 +219,16 @@ addIngredientBtn.addEventListener('click', async function (event) {
         unitName:   ingredientUnitName
     };
 
-    // Send the JSON object to the main process
-    try{
-        
-        if (isUpdateMode) {
-            await ipcRenderer.invoke('update-ingredient-file', ingredientName, fileContent);
-            errorHandling(messageBox, true, 'Ingredient updated successfully');
-            clearInputs();
-        } else {
-            await ipcRenderer.invoke('create-ingredient-file', ingredientName, fileContent);
-            errorHandling(messageBox, true, 'Ingredient created successfully');
-            clearInputs();
-        }
+    // Send the JSON object to the main process       
+    if (isUpdateMode) {
+        ipcRenderer.send('update-ingredient-file', ingredientName, fileContent);
+        clearInputs();
+    } else {
+        ipcRenderer.send('create-ingredient-file', ingredientName, fileContent);
+        clearInputs();
+    }
 
-    }
-    catch(err){
-        console.error(err);
-        return;
-    }
-});
+    console.error(err);
+    return;
+ });
 

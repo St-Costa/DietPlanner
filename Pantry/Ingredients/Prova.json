@@ -1,0 +1,16 @@
+{
+  "name": "Prova",
+  "type": "Milk product",
+  "kcal": "6",
+  "protein": "5",
+  "fiber": "5",
+  "fat": "5",
+  "saturated": "5",
+  "carb": "5",
+  "sugar": "5",
+  "salt": "5",
+  "chol": "5",
+  "cost": "5",
+  "unitWeight": "",
+  "unitName": ""
+}
