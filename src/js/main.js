@@ -163,7 +163,7 @@ ipcMain.handle('read-ingredient-file', async (event, ingredientName) => {
     }
 });
 
-ipcMain.handle('delete-ingredient', async (event, ingredient) => {
+ipcMain.on('delete-ingredient', async (event, ingredient) => {
     const filePath = path.join(__dirname, '../../Pantry/Ingredients', `${ingredient}.json`);
     
     try{
@@ -171,6 +171,7 @@ ipcMain.handle('delete-ingredient', async (event, ingredient) => {
 
         // Refresh all windows
         refreshAllWindows('From delete-ingredient');
+        event.sender.send('main-success', `Succesfully deleted ingredient file: ${ingredient}!`);
 
         return resultOfDeletion;
     }
@@ -179,9 +180,6 @@ ipcMain.handle('delete-ingredient', async (event, ingredient) => {
 
         // Send error message to renderer
         event.sender.send('main-error', `Failed deleting ingredient file: ${ingredient}!`);
-
-        // Throw error to renderer so it does not continue
-        throw err;
     }
 
 });
@@ -239,6 +237,7 @@ ipcMain.handle('get-ingredient-types', async (event) => {
 
         // Send error message to renderer
         event.sender.send('main-error', `Failed reading ingredient files!`);
+
         // Throw error to renderer so it does not continue
         throw err;
     }

@@ -42,7 +42,10 @@ ipcRenderer.on('refresh', (event, args) => {
 ipcRenderer.on('main-error', (event, errMsg) => {
     errorHandling(messageBoxDiv, false, errMsg);
 });
-
+// Success
+ipcRenderer.on('main-success', (event, errMsg) => {
+    errorHandling(messageBoxDiv, true, errMsg);
+});
 
 
 // On opening of view, fetch and render ingredients
@@ -242,12 +245,6 @@ function deletingIngredientPrompt(ingredientName, recipeList){
     messageBoxDiv.appendChild(noButton);
 }
 
-async function deleteIngredient(ingredientName){
-    try{
-        await ipcRenderer.invoke('delete-ingredient', ingredientName);
-        errorHandling(messageBoxDiv, true, 'Ingredient deleted succesfully!');
-    }
-    catch(err){
-        console.error(err);
-    }
+function deleteIngredient(ingredientName){
+    ipcRenderer.send('delete-ingredient', ingredientName);
 }
