@@ -339,15 +339,17 @@ ipcMain.handle('create-recipe-file', async (event, recipeName, recipeData) => {
     return createFile(filePath, recipeData);
 });
 
-ipcMain.handle('delete-recipe', async (event, recipe) => {
+ipcMain.on('delete-recipe', async (event, recipe) => {
     const filePath = path.join(__dirname, '../../Pantry/Recipes', `${recipe}.json`);
     try{
         let resultOfDeletion = await deleteFile(filePath);
 
+        // Send success message to renderer
+        event.sender.send('main-success', `Succesfully deleted recipe file: ${recipe}!`);
+
+
         // Refresh all windows
         refreshAllWindows('From delete-recipe');
-
-        return resultOfDeletion;
     }
     catch(err){
         console.error(`[delete-recipe] -> `, err);

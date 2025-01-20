@@ -30,6 +30,17 @@ module.exports = {
     }
 }
 
+// Errors
+ipcRenderer.on('main-error', (event, errMsg) => {
+    errorHandling(messageBox, false, errMsg);
+});
+// Success
+ipcRenderer.on('main-success', (event, errMsg) => {
+    errorHandling(messageBox, true, errMsg);
+});
+
+
+
 // recipeList.js
 async function renderRecipeListTable(table) {
     // Render table
@@ -89,8 +100,7 @@ async function renderTableRow(table, rowName, rowNutritionalValue) {
         try {
             switch(listType) {
                 case 'recipe':
-                    await ipcRenderer.invoke('delete-recipe', rowName);
-                    errorHandling(messageBox, true, "Recipe deleted successfully");
+                    ipcRenderer.send('delete-recipe', rowName);
                     break;
                 default:
                     console.error("List type not recognized");
