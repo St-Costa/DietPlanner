@@ -590,70 +590,91 @@ ipcMain.on('open-pantry-window', (event, arg) => {
 /*****************
 * HANDLES
 ******************/
-ipcMain.handle('add-ingredient-to-pantry', async (event, ingredient) => {
+ipcMain.on('add-ingredient-to-pantry', async (event, ingredient) => {
     const { ingredientName, ingredientQuantity } = ingredient;
     const filePath = path.join(__dirname, '../../Pantry', `Pantry.json`);
     
-    let readingResult = await readJsonFile(filePath);
     let pantryData = {};
 
-    switch(readingResult) {
-        case 'failure':
-            console.error('[add-ingredient-to-pantry] -> Failed to read file:', err);
-            return errorsJSON.read_file_failure;
-        case 'file-not-found':
-            fileContent = {
-                ingredientsArray: [],
-                quantitiesArray: []
-            };
-            pantryData = fileContent;
-            let resultCreation = await createFile(filePath, fileContent);     
-            if (resultCreation === 'failure'){
-                return errorsJSON.file_not_created;
-            }
-            break;   
-        default:
-            pantryData = readingResult;
+ 
+    // If pantry file does not exists -> create if
+    if (!fs.existsSync(filePath)) {
+        try{ 
+            await createFile(filePath, {}); 
+        }
+        catch(err) { 
+            console.error(`[add-ingredient-to-pantry] -> `, err);
+
+            // Send error message to renderer
+            event.sender.send('main-error', `Failed to create pantry file!`);        
+        }
     }
+   // Read pantry file
+   else{
+        try{
+            pantryData = await readJsonFile(filePath);    
+        }
+        catch(err){
+            console.error(`[add-ingredient-to-pantry] -> `, err);
+
+            // Send error message to renderer
+            event.sender.send('main-error', `Failed reading pantry file!`);
+        }
+   }
 
     // Check if the ingredient is already in the recipe
     if (pantryData.ingredientsArray.includes(ingredientName)) {
-        return 'ingredient-already-in-pantry';
+        event.sender.send('main-error', `Ingredient already in pantry!`);
     }
-
     // Update the recipe
-    pantryData.ingredientsArray.push(ingredientName);
-    pantryData.quantitiesArray.push(ingredientQuantity);
+    else{
+        pantryData.ingredientsArray.push(ingredientName);
+        pantryData.quantitiesArray.push(ingredientQuantity);
 
-    let overwriteResult = await updateFile(filePath, pantryData);
+        await updateFile(filePath, pantryData);
 
-    return overwriteResult;
+        // Send success message to renderer
+        event.sender.send('main-success', `Succesfully added ingredient to pantry!`);
+    
+        // Refresh all windows
+        refreshAllWindows('From update-pantry');
+    }
 });
 
 ipcMain.handle('read-pantry-file', async (event) => {
     const filePath = path.join(__dirname, '../../Pantry', `Pantry.json`);
-    return readJsonFile(filePath);
+    try{
+        return await readJsonFile(filePath);
+    }
+    catch(err){
+        console.error(`[read-pantry-file] -> `, err);
+
+        // Send error message to renderer
+        event.sender.send('main-error', `Failed reading pantry file!`);
+
+        // Throw error to renderer so it does not continue
+        throw err;
+    }
 });
 
-ipcMain.handle('update-pantry', async (event, updatedPantryJSON) => {
+ipcMain.on('update-pantry', async (event, updatedPantryJSON) => {
     const filePath = path.join(__dirname, '../../Pantry', `Pantry.json`);
     const fileContent = updatedPantryJSON;
 
-    let readingResult = await readJsonFile(filePath);
-    // The pantry file must exist
-    switch (readingResult) {
-        case 'failure':
-            console.error('[update-pantry] -> Failed to read file:', err);
-            return errorsJSON.read_file_failure;
-        default:    // File exists -> update it
-            let updateResult = await updateFile(filePath, fileContent);
-            // 'file-not-found' error is not possible here
-            if (updateResult === 'success') {
-                return successJSON.file_updated;
-            }
-            else {
-                return errorsJSON.file_not_updated;
-            }
+    try{
+        await updateFile(filePath, fileContent);
+
+        // Send success message to renderer
+        event.sender.send('main-success', `Succesfully updated pantry file!`);
+
+        // Refresh all windows
+        refreshAllWindows('From update-pantry');
+    }
+    catch(err){
+        console.error(`[update-pantry] -> `, err);
+    
+        // Send error message to renderer
+        event.sender.send('main-error', `Failed updating pantry file!`);
     }
 });
 
