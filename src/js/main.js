@@ -365,8 +365,19 @@ ipcMain.on('delete-recipe', async (event, recipe) => {
 
 ipcMain.handle('read-recipe-file', async (event, recipeName) => {
     const filePath = path.join(__dirname, '../../Pantry/Recipes', `${recipeName}.json`);
-    const readingResult = await readJsonFile(filePath);
-    return readingResult;
+
+    try{
+        return await readJsonFile(filePath);
+    }
+    catch(err){
+        console.error(`[read-recipe-file] -> `, err);
+
+        // Send error message to renderer
+        event.sender.send('main-error', `Failed reading recipe file: ${recipeName}!`);
+
+        // Throw error to renderer so it does not continue
+        throw err;
+    }
 });
 
 
@@ -552,7 +563,7 @@ ipcMain.on('open-recipe-grocery-list-window', (event, recipeName) => {
     recipeGroceryListView.webContents.openDevTools();
 
     recipeGroceryListView.webContents.on('did-finish-load', () => {
-        recipeGroceryListView.webContents.send('init-args', {groceryType: 'recipe',recipeName: recipeName});
+        recipeGroceryListView.webContents.send('grocery-list', {groceryType: 'recipe',recipeName: recipeName});
     });
 });
 

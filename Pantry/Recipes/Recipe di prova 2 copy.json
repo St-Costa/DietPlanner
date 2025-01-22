@@ -1,9 +1,11 @@
 {
   "ingredientsArray": [
-    "Beef hamburger"
+    "Beef hamburger",
+    "Prova"
   ],
   "quantitiesArray": [
-    200
+    200,
+    100
   ],
   "preparation": "prova"
 }
