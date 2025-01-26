@@ -1,0 +1,25 @@
+{
+    "failedReadingIngredients":                     "Failed to read ingredients in folder!",
+    "failedReadingRecipes":                         "Failed to read recipes in folder!",
+
+
+
+    "failedReadingIngredientFile":                  "Failed to read ingredient file: ",
+    "failedDeletingIngredientFile":                 "Failed to delete ingredient file: ",
+    "failedCreatingIngredientFile":                 "Failed to create ingredient file: ",
+    "failedUpdatingIngredientFile":                 "Failed to update ingredient file: ",
+    "failedComputingIngredientNutritionalValues":   "Failed to compute nutritional values for ingredient: ",
+
+    "failedReadingRecipeFile":                      "Failed to read recipe file: ",
+    "failedDeletingRecipeFile":                     "Failed to delete recipe file: ",
+    "failedCreatingRecipeFile":                     "Failed to create recipe file: ",
+    "failedUpdatingRecipeFile":                     "Failed to update recipe file: ",
+    "failedComputingRecipeNutritionalValues":       "Failed to compute nutritional values for recipe: ",
+
+    "failedReadingPantryFile":                      "Failed to read recipe file: ",
+    "failedCreatingPantryFile":                     "Failed to create recipe file: ",
+    "IngredientAlreadyInPantry":                    "Ingredient is already in pantry: ",
+    "failedUpdatingPantryFile":                     "Failed to update recipe file: ",
+
+    "failedUpdatingFile":                           "Failed to update file: "
+}

@@ -3,13 +3,11 @@ const path = require('path');
 const url = require('url');
 const fs = require('fs');
 
-
+// Import messages from JSON file
 const errorsJSON = require('./errors.json');
 const successJSON = require('./success.json');
 
 
-
- 
 
 /**************************************************************************************************
 * INDEX
@@ -140,7 +138,7 @@ ipcMain.handle('get-ingredient-names', async (event) => {
         console.error(`[get-ingredient-names] -> `, err);
 
         // Send error message to renderer
-        event.sender.send('main-error', `Failed reading ingredient files!`);
+        event.sender.send('main-error', errorsJSON.failedReadingIngredients);
     
         // Throw error to renderer so it does not continue
         throw err;
@@ -156,7 +154,41 @@ ipcMain.handle('read-ingredient-file', async (event, ingredientName) => {
         console.error(`[read-ingredient-file] -> `, err);
 
         // Send error message to renderer
-        event.sender.send('main-error', `Failed reading ingredient file: ${ingredientName}!`);
+        event.sender.send('main-error', errorsJSON.failedReadingIngredientFile + ingredientName);
+
+        // Throw error to renderer so it does not continue
+        throw err;
+    }
+});
+
+ipcMain.handle('read-ingredient-file-with-quantity', async (event, ingredientName, quantity ) => {
+    const filePath = path.join(__dirname, '../../Pantry/Ingredients', `${ingredientName}.json`);
+    
+    // Read file
+    let ingredientData  = {};
+    try{
+        ingredientData  = await readJsonFile(filePath);
+    }
+    catch(err){
+        console.error(`[read-ingredient-file-with-quantity] -> `, err);
+
+        // Send error message to renderer
+        event.sender.send('main-error', errorsJSON.failedReadingIngredientFile + ingredientName);
+
+        // Throw error to renderer so it does not continue
+        throw err;
+    }
+    
+    // Compute nutritional values
+    try{
+        const ingredientDataWithQuantity    = computeIngredientNutritionalValues(ingredientData, quantity);
+        return ingredientDataWithQuantity;
+    }
+    catch(err){
+        console.error(`[read-ingredient-file-with-quantity] -> `, err);
+
+        // Send error message to renderer
+        event.sender.send('main-error', errorsJSON.failedComputingIngredientNutritionalValues + ingredientName);
 
         // Throw error to renderer so it does not continue
         throw err;
@@ -171,7 +203,7 @@ ipcMain.on('delete-ingredient', async (event, ingredient) => {
 
         // Refresh all windows
         refreshAllWindows('From delete-ingredient');
-        event.sender.send('main-success', `Succesfully deleted ingredient file: ${ingredient}!`);
+        event.sender.send('main-success', successJSON.successDeleteIngredient + ingredient);
 
         return resultOfDeletion;
     }
@@ -179,7 +211,7 @@ ipcMain.on('delete-ingredient', async (event, ingredient) => {
         console.error(`[delete-ingredient] -> `, err);
 
         // Send error message to renderer
-        event.sender.send('main-error', `Failed deleting ingredient file: ${ingredient}!`);
+        event.sender.send('main-error', errorsJSON.failedDeletingIngredientFile + ingredient);
     }
 
 });
@@ -191,7 +223,7 @@ ipcMain.on('create-ingredient-file', async (event, ingredientName, ingredientDat
         await createFile(filePath, ingredientData);
 
         // Send error message to renderer
-        event.sender.send('main-success', `Succesfully created ingredient file: ${ingredientName}!`);
+        event.sender.send('main-success', successJSON.successCreateIngredient + ingredientName);
 
         // Refresh all windows
         refreshAllWindows('From create-ingredient-file');
@@ -200,7 +232,7 @@ ipcMain.on('create-ingredient-file', async (event, ingredientName, ingredientDat
         console.error(`[create-ingredient-file] -> `, err);
     
         // Send error message to renderer
-        event.sender.send('main-error', `Failed creating ingredient file: ${ingredientName}!`);
+        event.sender.send('main-error', errorsJSON.failedCreatingIngredientFile + ingredientName);
     }
 });
 
@@ -211,7 +243,7 @@ ipcMain.on('update-ingredient-file', async (event, ingredientName, fileContent) 
         await updateFile(filePath, fileContent);
 
         // Send success message to renderer
-        event.sender.send('main-success', `Succesfully updated ingredient file: ${ingredientName}!`);
+        event.sender.send('main-success', successJSON.successUpdateIngredient + ingredientName);
 
         // Refresh all windows
         refreshAllWindows('From update-ingredient-file');
@@ -220,7 +252,7 @@ ipcMain.on('update-ingredient-file', async (event, ingredientName, fileContent) 
         console.error(`[update-ingredient-file] -> `, err);
     
         // Send error message to renderer
-        event.sender.send('main-error', `Failed updating ingredient file: ${ingredientName}!`);
+        event.sender.send('main-error', errorsJSON.failedUpdatingIngredientFile + ingredientName);
     }
 });
 
@@ -236,7 +268,7 @@ ipcMain.handle('get-ingredient-types', async (event) => {
         console.error(`[get-ingredient-types] -> `, err);
 
         // Send error message to renderer
-        event.sender.send('main-error', `Failed reading ingredient files!`);
+        event.sender.send('main-error', errorsJSON.failedReadingIngredients);
 
         // Throw error to renderer so it does not continue
         throw err;
@@ -256,7 +288,7 @@ ipcMain.handle('get-ingredient-types', async (event) => {
             console.error(`[get-ingredient-types] -> `, err);
     
             // Send error message to renderer
-            event.sender.send('main-error', `Failed reading ingredient file: ${ingredient}!`);
+            event.sender.send('main-error', errorsJSON.failedReadingIngredientFile + ingredient);
     
             // Throw error to renderer so it does not continue
             throw err;
@@ -345,7 +377,7 @@ ipcMain.on('delete-recipe', async (event, recipe) => {
         let resultOfDeletion = await deleteFile(filePath);
 
         // Send success message to renderer
-        event.sender.send('main-success', `Succesfully deleted recipe file: ${recipe}!`);
+        event.sender.send('main-success', successJSON.successDeleteRecipe + recipe);
 
 
         // Refresh all windows
@@ -355,7 +387,7 @@ ipcMain.on('delete-recipe', async (event, recipe) => {
         console.error(`[delete-recipe] -> `, err);
 
         // Send error message to renderer
-        event.sender.send('main-error', `Failed deleting recipe file: ${recipe}!`);
+        event.sender.send('main-error', errorsJSON.failedDeletingRecipeFile + recipe);
 
         // Throw error to renderer so it does not continue
         throw err;
@@ -373,7 +405,7 @@ ipcMain.handle('read-recipe-file', async (event, recipeName) => {
         console.error(`[read-recipe-file] -> `, err);
 
         // Send error message to renderer
-        event.sender.send('main-error', `Failed reading recipe file: ${recipeName}!`);
+        event.sender.send('main-error', errorsJSON.failedReadingRecipeFile + recipeName);
 
         // Throw error to renderer so it does not continue
         throw err;
@@ -394,7 +426,7 @@ ipcMain.handle('get-recipes-using-ingredient', async (event, ingredient) => {
         console.error(`[get-recipes-using-ingredient] -> `, err);
     
         // Send error message to renderer
-        event.sender.send('main-error', `Failed reading recipes files!`);
+        event.sender.send('main-error', errorsJSON.failedReadingRecipes);
     
         // Throw error to renderer so it does not continue
         throw err;
@@ -416,7 +448,7 @@ ipcMain.handle('get-recipes-using-ingredient', async (event, ingredient) => {
         } catch (err) {
             console.error(`[get-recipes-using-ingredient] ->`, err);
             // Send error message to renderer
-            event.sender.send('main-error', `Failed reading recipe files: ${recipe}!`);
+            event.sender.send('main-error', errorsJSON.failedReadingRecipeFile + recipe);
         
             // Throw error to renderer so it does not continue
             throw err;
@@ -437,7 +469,7 @@ ipcMain.handle('recipe-nutritional-values', async (event, recipeName) => {
         console.error(`[recipe-nutritional-values] -> `, err);
 
         // Send error message to renderer
-        event.sender.send('main-error', `Failed computing recipe nutritional values!`);
+        event.sender.send('main-error', errorsJSON.failedComputingRecipeNutritionalValues + recipeName);
     
         // Throw error to renderer so it does not continue
         throw err;
@@ -453,7 +485,7 @@ ipcMain.handle('get-recipe-names', async (event) => {
         console.error(`[get-recipe-names] -> `, err);
 
         // Send error message to renderer
-        event.sender.send('main-error', `Failed reading recipe files!`);
+        event.sender.send('main-error', errorsJSON.failedReadingRecipes);
     
         // Throw error to renderer so it does not continue
         throw err;
@@ -617,7 +649,7 @@ ipcMain.on('add-ingredient-to-pantry', async (event, ingredient) => {
             console.error(`[add-ingredient-to-pantry] -> `, err);
 
             // Send error message to renderer
-            event.sender.send('main-error', `Failed to create pantry file!`);        
+            event.sender.send('main-error', errorsJSON.failedCreatingPantryFile);        
         }
     }
    // Read pantry file
@@ -629,13 +661,13 @@ ipcMain.on('add-ingredient-to-pantry', async (event, ingredient) => {
             console.error(`[add-ingredient-to-pantry] -> `, err);
 
             // Send error message to renderer
-            event.sender.send('main-error', `Failed reading pantry file!`);
+            event.sender.send('main-error', errorsJSON.failedReadingPantryFile);
         }
    }
 
     // Check if the ingredient is already in the recipe
     if (pantryData.ingredientsArray.includes(ingredientName)) {
-        event.sender.send('main-error', `Ingredient already in pantry!`);
+        event.sender.send('main-error', errorsJSON.IngredientAlreadyInPantry);
     }
     // Update the recipe
     else{
@@ -645,7 +677,7 @@ ipcMain.on('add-ingredient-to-pantry', async (event, ingredient) => {
         await updateFile(filePath, pantryData);
 
         // Send success message to renderer
-        event.sender.send('main-success', `Succesfully added ingredient to pantry!`);
+        event.sender.send('main-success', successJSON.successIngredientInPantry);
     
         // Refresh all windows
         refreshAllWindows('From update-pantry');
@@ -661,7 +693,7 @@ ipcMain.handle('read-pantry-file', async (event) => {
         console.error(`[read-pantry-file] -> `, err);
 
         // Send error message to renderer
-        event.sender.send('main-error', `Failed reading pantry file!`);
+        event.sender.send('main-error', errorsJSON.failedReadingPantryFile);
 
         // Throw error to renderer so it does not continue
         throw err;
@@ -676,7 +708,7 @@ ipcMain.on('update-pantry', async (event, updatedPantryJSON) => {
         await updateFile(filePath, fileContent);
 
         // Send success message to renderer
-        event.sender.send('main-success', `Succesfully updated pantry file!`);
+        event.sender.send('main-success', successJSON.successUpdatePantry);
 
         // Refresh all windows
         refreshAllWindows('From update-pantry');
@@ -685,7 +717,7 @@ ipcMain.on('update-pantry', async (event, updatedPantryJSON) => {
         console.error(`[update-pantry] -> `, err);
     
         // Send error message to renderer
-        event.sender.send('main-error', `Failed updating pantry file!`);
+        event.sender.send('main-error', errorsJSON.failedUpdatingPantryFile);
     }
 });
 
@@ -737,22 +769,35 @@ ipcMain.handle('get-window-id', (event) => {
 
 ipcMain.handle('update-or-create-file', async (event, updatedJSON, type) => {
     let filePath = '';
+    let fileName = updatedJSON.name;
+    
     switch (type) {
         case 'ingredient':
-            filePath = path.join(__dirname, '../../Pantry/Ingredients', `${updatedJSON.ingredientName}.json`);
+            filePath = path.join(__dirname, '../../Pantry/Ingredients', `${fileName}.json`);
             break;
         case 'recipe':
-            filePath = path.join(__dirname, '../../Pantry/Recipes',     `${updatedJSON.recipeName}.json`);
+            filePath = path.join(__dirname, '../../Pantry/Recipes',     `${fileName}.json`);
             break;
         case 'dailyPlan':
-            filePath = path.join(__dirname, '../../Pantry/DailyPlans',  `${updatedJSON.planName}.json`);
+            filePath = path.join(__dirname, '../../Pantry/DailyPlans',  `${fileName}.json`);
             break;
     }
-    const fileContent = updatedJSON;
+    const fileContent = JSON.stringify(updatedJSON, null, 2);
 
+    console.log(`[update-or-create-file] -> Updating file: ${updatedJSON}`);
 
-    let result = await createOrUpdateFile(filePath, fileContent);
-    return result;
+    try{
+        await createOrUpdateFile(filePath, fileContent);
+        const readResult =  await readJsonFile(filePath);
+        event.sender.send('main-success', successJSON.successUpdateFile + fileName);
+        return readResult;
+    }
+    catch(err){
+        console.error(`[update-or-create-file] -> `, err);
+    
+        // Send error message to renderer
+        event.sender.send('main-error', errorsJSON.failedUpdatingFile + filePath);
+    }
 });
 
 
@@ -898,6 +943,22 @@ async function computeRecipeNutritionalValues (ingredientArray, quantityArray) {
 }
 
 
+async function computeIngredientNutritionalValues (ingredientData, quantity) {
+    ingredientData.kcal        *= quantity / 100;
+    ingredientData.protein     *= quantity / 100;
+    ingredientData.fiber       *= quantity / 100;
+    ingredientData.fat         *= quantity / 100;
+    ingredientData.saturated   *= quantity / 100;
+    ingredientData.carb        *= quantity / 100;   
+    ingredientData.sugar       *= quantity / 100;
+    ingredientData.salt        *= quantity / 100;
+    ingredientData.chol        *= quantity / 100;
+    ingredientData.cost        *= quantity / 100;
+
+    return ingredientData;
+}
+
+
 function refreshAllWindows(message) {
     BrowserWindow.getAllWindows().forEach(win => {
         win.webContents.send('refresh', message);
@@ -905,7 +966,6 @@ function refreshAllWindows(message) {
 }
 
 async function updateFile(filePath, fileContent) {
-
     // Check if the file content is a string
     if (typeof fileContent !== 'string') {
         fileContent = JSON.stringify(fileContent, null, 2);
@@ -916,45 +976,36 @@ async function updateFile(filePath, fileContent) {
         await fs.promises.writeFile(filePath, fileContent);
     } catch (err) {
         console.error('[updateFile] -> ', err);
+
         throw err;
     }
 }
 
 
 async function createOrUpdateFile(filePath, fileContent) {
-    const {readResultJSON, dataJSON} = await readJsonFile(filePath);
 
-    switch (readResultJSON) {
-        // Failed to read file
-        case errorsJSON.read_file_failure:
-            console.error('[createOrUpdateFile] -> Failed to read file:', filePath);
-            return {readResultJSON, dataJSON: ''};
+    // Read file
+    try{
+        await readJsonFile(filePath);
+    }
+    catch(err){
+        // If the file does not exists, create it
+        if (err.code === 'ENOENT') {
+            await createFile(filePath, fileContent);
+            return;
+        }
+        else{
+            console.error(`[createOrUpdateFile] -> `, err);
+            throw err;    
+        }
+    }
 
-        // File does not exist -> create it
-        case successJSON.file_created: 
-            let createResult = await createFile(filePath, fileContent);
-            
-            if (createResult.type === true) {
-                console.error('[createOrUpdateFile] -> File created!', filePath);
-                return {resultJSON: successJSON.file_created, fileContent}
-            }
-            
-            else {
-                console.error('[createOrUpdateFile] -> Failed to create file:', filePath);
-                return {resultJSON: errorsJSON.file_not_created, dataJSON: ''};
-            }
-
-        // File exists -> update it
-        default:    
-            let updateResult = await updateFile(filePath, fileContent);
-            // 'file-not-found' error is not possible here
-            if (updateResult === successJSON.file_updated) {
-                console.error('[createOrUpdateFile] -> File updated!', filePath);
-                return {resultJSON: successJSON.file_updated, fileContent};
-            }
-            else {
-                console.error('[createOrUpdateFile] -> Failed to update file:', filePath);
-                return {resultJSON: errorsJSON.file_not_updated, dataJSON: ''};
-            }
+    // Update file
+    try{
+        await updateFile(filePath, fileContent);
+    }
+    catch(err){
+        console.error(`[createOrUpdateFile] -> `, err);
+        throw err;
     }
 }

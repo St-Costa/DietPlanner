@@ -1,11 +1,10 @@
 {
+  "name": "Recipe di prova 2 copy 7",
   "ingredientsArray": [
-    "Beef hamburger",
     "Prova"
   ],
   "quantitiesArray": [
-    200,
     100
   ],
-  "preparation": "prova"
+  "preparation": "Modifica la preparation"
 }

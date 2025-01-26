@@ -1,18 +1,14 @@
 {
-    "file_created": {
-        "type": true,
-        "message": "File created successfully!"
-    },
-    "file_deleted": {
-        "type": true,
-        "message": "File deleted successfully!"
-    },
-    "file_updated": {
-        "type": true,
-        "message": "File updated successfully!"
-    },
-    "file_read": {
-        "type": true,
-        "message": "File read successfully!"
-    }
+    "successDeleteIngredient":                      "Succesfully deleted ingredient file: ",
+    "successCreateIngredient":                      "Succesfully created ingredient file: ",
+    "successUpdateIngredient":                      "Succesfully updated ingredient file: ",
+
+    "successDeleteRecipe":                          "Succesfully deleted recipe file: ",
+    "successCreateRecipe":                          "Succesfully created recipe file: ",
+    "successUpdateRecipe":                          "Succesfully updated recipe file: ",
+
+    "successIngredientInPantry":                    "Succesfully added ingredient to pantry: ",
+    "successUpdatePantry":                          "Succesfully updated pantry file: ",
+
+    "successUpdateFile":                            "Succesfully updated file: "
 }

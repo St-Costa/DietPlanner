@@ -1,25 +1,20 @@
 const { ipcRenderer }   = require('electron');
 const { errorHandling } = require('./messageBoxUpdate');
-const { renderRecipeTable } = require('./recipeIngredientsTable');
+const { setTableType, renderRecipeAndPlanTable } = require('./recipeIngredientsTable');
 const { showSuggestions, navigateSuggestions } = require('./suggestions');
 
-// Specific errors
-const addRecipeErrorsJSON   = require('./addRecipeErrors.json');
-const messageBoxDiv         = document.getElementById('messageBox');
+// Errors
+const messageBoxDiv = document.getElementById('messageBox');
 
 // Ingredient suggestions
-const ingredientNameInput       = document.getElementById('ingredientName');
-const suggestionBox_ingredient  = document.getElementById('suggestionBox_ingredient');
-
-const addIngredientButton       = document.getElementById('addIngredientButton');
-
-const unitNameSpan              = document.getElementById('unitName');
-const unitAlternativeSpan       = document.getElementById('unitAlternative');
-const tdQuantityInput           = document.getElementById('tdQuantityInput');
-
-const ingredientToAdd_quantityGrams        = document.getElementById('ingredientToAdd_quantityGrams');
-const ingredientToAdd_quantityUnit         = document.getElementById('ingredientToAdd_quantityUnit');
-
+const ingredientNameInput               = document.getElementById('ingredientName');
+const suggestionBox_ingredient          = document.getElementById('suggestionBox_ingredient');
+const addIngredientButton               = document.getElementById('addIngredientButton');
+const unitNameSpan                      = document.getElementById('unitName');
+const unitAlternativeSpan               = document.getElementById('unitAlternative');
+const tdQuantityInput                   = document.getElementById('tdQuantityInput');
+const ingredientToAdd_quantityGrams     = document.getElementById('ingredientToAdd_quantityGrams');
+const ingredientToAdd_quantityUnit      = document.getElementById('ingredientToAdd_quantityUnit');
 const suggestedIngredientDetails = {
     type:       document.getElementById('typeSuggestedIngredient'),
     kcal:       document.getElementById('kcalSuggestedIngredient'),
@@ -33,7 +28,6 @@ const suggestedIngredientDetails = {
     chol:       document.getElementById('cholSuggestedIngredient'),
     cost:       document.getElementById('costSuggestedIngredient')
 };
-
 let ingredientToAdd_details = {};
 
 // Recipe
@@ -41,11 +35,37 @@ const recipeNameInput       = document.getElementById('recipeName');
 const suggestionBox_recipe  = document.getElementById('suggestionBox_recipe');
 const preparationBox        = document.getElementById('preparation');
 const deleteRecipeButton    = document.getElementById('deleteRecipe');
-
-let recipeDetails = {};
+let recipeDetailsJSON       = {};
 
 // Ingredient in table
 const dynamicTable = document.getElementById('dynamicTable');
+
+// Set the table type
+setTableType('recipe', dynamicTable);
+
+// Refresh the list when an ingredient is created/deleted in another page
+ipcRenderer.on('refresh', async (event, args) => {
+    console.log("Refreshing because:", args);
+    // Show message
+    errorHandling(messageBoxDiv, true, "Refreshing table because of changes!");
+    // Refresh the table
+    recipeToDisplay = recipeNameInput.value.trim();
+    if(recipeToDisplay !== ''){
+        recipeDetailsJSON = await ipcRenderer.invoke('read-recipe-file', recipeToDisplay);
+        refreshRecipeTable(recipeDetailsJSON);
+    }
+    // Clear ingredient to add
+    clearSuggestedIngredientRow();
+});
+
+// Errors
+ipcRenderer.on('main-error', (event, errMsg) => {
+    errorHandling(messageBoxDiv, false, errMsg);
+});
+// Success
+ipcRenderer.on('main-success', (event, errMsg) => {
+    errorHandling(messageBoxDiv, true, errMsg);
+});
 
 
 /*  
@@ -93,16 +113,11 @@ ipcRenderer.on('suggested-ingredient-clicked', (event, ingredientData) => {
         clearSuggestedIngredientRow();
     }
 });
-/*  
-    [END]  Ingredient suggestions  
-*/
-
 
 /* ----------------- */
 
-
 /*  
-    [START]  Recipe suggestions  
+    Recipe suggestions  
 */
 recipeNameInput.addEventListener('focus', async function () {
     const thisWindowId = await ipcRenderer.invoke('get-window-id');
@@ -116,12 +131,8 @@ recipeNameInput.addEventListener('keydown', function (e) {
     navigateSuggestions(e, suggestionBox_recipe);
 });
 ipcRenderer.on('suggested-recipe-clicked', (event, recipeData) => {
-    recipeDetails = recipeData;
-    renderRecipeTable();
+    refreshRecipeTable(recipeData);
 });
-/*  
-    [END]  Recipe suggestions  
-*/
 
 
 /* ----------------- */
@@ -130,47 +141,29 @@ ipcRenderer.on('suggested-recipe-clicked', (event, recipeData) => {
 /*  
     [START]  Preparation box  
 */
-
-// Save the recipe with the new preparation text
-preparationBox.addEventListener('keydown', function (e) {
+preparationBox.addEventListener('keydown', async function (e) {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-
         const recipeName = recipeNameInput.value.trim();
 
         // Check if recipe name input is empty
-        if (recipeName === '') {
-            errorHandling(messageBoxDiv, addRecipeErrorsJSON.empty_recipe_name);
+        if (recipeName !== '') {
+            recipeDetailsJSON.preparation = preparationBox.value;
+            const recipeData = await ipcRenderer.invoke('update-or-create-file', recipeDetailsJSON, 'recipe');
+            refreshRecipeTable(recipeData);
         }
         else{
-            recipeDetails.preparationText = preparationBox.value;
-            createOrUpdateRecipe();
-            preparationTextBeforeModification = preparationBox.value;
+            errorHandling(messageBoxDiv, false, "Recipe name is empty!");
         }
     }
 });
-
 // If focus is lost, revert to the original preparation
 preparationBox.addEventListener('blur', function () {
-    preparationBox.value = recipeDetails.preparationText || '';
+    preparationBox.value = recipeDetailsJSON.preparation || '';
 });
-/*  
-    [END]  Preparation box  
-*/
 
+/* ----------------- */
 
-// Read table, update the recipe file, update the shown table
-async function createOrUpdateRecipe() {
-    // Update or create recipe file
-    let updateOrCreateResult = await ipcRenderer.invoke('update-or-create-file', recipeDetails, 'recipe');
-    const [resultJSON, updatedRecipeData] = Object.values(updateOrCreateResult);
-    errorHandling(messageBoxDiv, resultJSON);
-
-    if(resultJSON.type){
-        recipeDetails = updatedRecipeData; 
-        renderRecipeTable();
-    }
-}
 
 // Update ingredient to add with nutritional values
 ingredientToAdd_quantityGrams.addEventListener('input', function () {
@@ -235,22 +228,22 @@ function updateIngredientToAddDetails() {
 
 // Clear the suggested ingredient row
 function clearSuggestedIngredientRow() {
-    ingredientNameInput.value = '';
-    suggestedIngredientDetails.type.textContent = '';
-    suggestedIngredientDetails.kcal.textContent = '';
-    suggestedIngredientDetails.protein.textContent = '';
-    suggestedIngredientDetails.fiber.textContent = '';
-    suggestedIngredientDetails.fat.textContent = '';
-    suggestedIngredientDetails.saturated.textContent = '';
-    suggestedIngredientDetails.carb.textContent = '';
-    suggestedIngredientDetails.sugar.textContent = '';
-    suggestedIngredientDetails.salt.textContent = '';
-    suggestedIngredientDetails.chol.textContent = '';
-    suggestedIngredientDetails.cost.textContent = '';
-    tdQuantityInput.style.display = 'none';
-    unitAlternativeSpan.style.display = 'none';
-    addIngredientButton.style.display = 'none';
-    addIngredientButton.className = 'deleteAddButton';
+    ingredientNameInput.value                           = '';
+    suggestedIngredientDetails.type.textContent         = '';
+    suggestedIngredientDetails.kcal.textContent         = '';
+    suggestedIngredientDetails.protein.textContent      = '';
+    suggestedIngredientDetails.fiber.textContent        = '';
+    suggestedIngredientDetails.fat.textContent          = '';
+    suggestedIngredientDetails.saturated.textContent    = '';
+    suggestedIngredientDetails.carb.textContent         = '';
+    suggestedIngredientDetails.sugar.textContent        = '';
+    suggestedIngredientDetails.salt.textContent         = '';
+    suggestedIngredientDetails.chol.textContent         = '';
+    suggestedIngredientDetails.cost.textContent         = '';
+    tdQuantityInput.style.display                       = 'none';
+    unitAlternativeSpan.style.display                   = 'none';
+    addIngredientButton.style.display                   = 'none';
+    addIngredientButton.className                       = 'deleteAddButton';
 
     unitWeight = 0;
 }
@@ -274,18 +267,18 @@ addIngredientButton.addEventListener('click', async function () {
         errorHandling(messageBoxDiv, addRecipeErrorsJSON.invalid_ingredient_quantity);
         return;
     }
-    else if (recipeDetails.ingredientsArray && recipeDetails.ingredientsArray.includes(ingredientName)) {
+    else if (recipeDetailsJSON.ingredientsArray && recipeDetailsJSON.ingredientsArray.includes(ingredientName)) {
         errorHandling(messageBoxDiv, addRecipeErrorsJSON.ingredient_already_in_recipe);
         return;
     }
 
     // Add ingredient to local recipe details
-    if (recipeDetails.ingredientsArray) {
-        recipeDetails.ingredientsArray.push(ingredientName);
-        recipeDetails.quantitiesArray.push(ingredientQuantity);
+    if (recipeDetailsJSON.ingredientsArray) {
+        recipeDetailsJSON.ingredientsArray.push(ingredientName);
+        recipeDetailsJSON.quantitiesArray.push(ingredientQuantity);
     } else {
-        recipeDetails.ingredientsArray = [ingredientName];
-        recipeDetails.quantitiesArray = [ingredientQuantity];
+        recipeDetailsJSON.ingredientsArray = [ingredientName];
+        recipeDetailsJSON.quantitiesArray = [ingredientQuantity];
     }
 
     await createOrUpdateRecipe();
@@ -307,51 +300,30 @@ deleteRecipeButton.addEventListener('click', async function () {
         recipeNameInput.value = '';
         preparationBox.value = '';
         dynamicTable.innerHTML = '';
-        recipeDetails = {};
+        recipeDetailsJSON = {};
         clearSuggestedIngredientRow();
     }
 });
 
 // Compute the nutritional values of an ingredient with a given quantity
 function computeIngredientNutritionalValue(ingredientData, quantityGrams){
-
-    let ingredientDataWithQuantity = {};
-    const multiplicator = quantityGrams / 100;
+    let ingredientDataWithQuantity  = {};
+    const multiplicator             = quantityGrams / 100;
 
     ingredientDataWithQuantity.type         = ingredientData.type || '-';
-    ingredientDataWithQuantity.kcal         = isNaN(ingredientData.kcal) 
-                                                ? '-' 
-                                                : (ingredientData.kcal      * multiplicator).toFixed(0);
-    ingredientDataWithQuantity.protein      = isNaN(ingredientData.protein) 
-                                                ? '-' 
-                                                : (ingredientData.protein   * multiplicator).toFixed(0);
-    ingredientDataWithQuantity.fiber        = isNaN(ingredientData.fiber) 
-                                                ? '-' 
-                                                : (ingredientData.fiber     * multiplicator).toFixed(0);  
-    ingredientDataWithQuantity.fat          = isNaN(ingredientData.fat) 
-                                                ? '-' 
-                                                : (ingredientData.fat       * multiplicator).toFixed(0);
-    ingredientDataWithQuantity.saturated    = isNaN(ingredientData.saturated) 
-                                                ? '-' 
-                                                : (ingredientData.saturated * multiplicator).toFixed(0);
-    ingredientDataWithQuantity.carb         = isNaN(ingredientData.carb) 
-                                                ? '-' 
-                                                : (ingredientData.carb      * multiplicator).toFixed(0);
-    ingredientDataWithQuantity.sugar        = isNaN(ingredientData.sugar) 
-                                                ? '-' 
-                                                : (ingredientData.sugar     * multiplicator).toFixed(0);
-    ingredientDataWithQuantity.salt         = isNaN(ingredientData.salt) 
-                                                ? '-' 
-                                                : (ingredientData.salt      * multiplicator).toFixed(2);
-    ingredientDataWithQuantity.chol         = isNaN(ingredientData.chol) 
-                                                ? '-' 
-                                                : (ingredientData.chol      * multiplicator).toFixed(0);
-    ingredientDataWithQuantity.cost         = isNaN(ingredientData.cost) 
-                                                ? '-' 
-                                                : (ingredientData.unitWeight 
-                                                    ? (ingredientData.cost * (quantityGrams / ingredientData.unitWeight)).toFixed(2) 
-                                                    : (ingredientData.cost *  multiplicator).toFixed(2)
-                                                );
+    ingredientDataWithQuantity.kcal         = isNaN(ingredientData.kcal)        ? '-' : (ingredientData.kcal        * multiplicator).toFixed(0);
+    ingredientDataWithQuantity.protein      = isNaN(ingredientData.protein)     ? '-' : (ingredientData.protein     * multiplicator).toFixed(0);
+    ingredientDataWithQuantity.fiber        = isNaN(ingredientData.fiber)       ? '-' : (ingredientData.fiber       * multiplicator).toFixed(0);  
+    ingredientDataWithQuantity.fat          = isNaN(ingredientData.fat)         ? '-' : (ingredientData.fat         * multiplicator).toFixed(0);
+    ingredientDataWithQuantity.saturated    = isNaN(ingredientData.saturated)   ? '-' : (ingredientData.saturated   * multiplicator).toFixed(0);
+    ingredientDataWithQuantity.carb         = isNaN(ingredientData.carb)        ? '-' : (ingredientData.carb        * multiplicator).toFixed(0);
+    ingredientDataWithQuantity.sugar        = isNaN(ingredientData.sugar)       ? '-' : (ingredientData.sugar       * multiplicator).toFixed(0);
+    ingredientDataWithQuantity.salt         = isNaN(ingredientData.salt)        ? '-' : (ingredientData.salt        * multiplicator).toFixed(2);
+    ingredientDataWithQuantity.chol         = isNaN(ingredientData.chol)        ? '-' : (ingredientData.chol        * multiplicator).toFixed(0);
+    ingredientDataWithQuantity.cost         = isNaN(ingredientData.cost)        ? '-' : (ingredientData.unitWeight  
+                                                                                                                    ? (ingredientData.cost * (quantityGrams / ingredientData.unitWeight)).toFixed(2) 
+                                                                                                                    : (ingredientData.cost *  multiplicator).toFixed(2)
+                                                                                        );
     ingredientDataWithQuantity.unitWeight   = ingredientData.unitWeight;
     ingredientDataWithQuantity.unitName     = ingredientData.unitName;
     return ingredientDataWithQuantity;
@@ -360,16 +332,15 @@ function computeIngredientNutritionalValue(ingredientData, quantityGrams){
 
 
 
+function refreshRecipeTable(recipeData){
+    recipeDetailsJSON = recipeData;
 
-function locallyModifyRecipe(ingredientName, ingredientQuantity){
-    indexToModify = recipeDetails.ingredientsArray.indexOf(ingredientName)
-    
-    if(ingredientQuantity === 0){
-        recipeDetails.ingredientsArray.splice(indexToModify, 1);
-        recipeDetails.quantitiesArray.splice(indexToModify, 1);   
-    }
-    else{
-        recipeDetails.quantitiesArray[indexToModify] = ingredientQuantity;
-    }
+    // Update the table of ingredients
+    renderRecipeAndPlanTable(recipeDetailsJSON);
 
+    // Update the recipe name and preparation text
+    preparationBox.value = recipeDetailsJSON.preparation;
+
+    // Hide the suggestion box
+     suggestionBox_recipe.innerHTML = '';
 }
