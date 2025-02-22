@@ -1,6 +1,6 @@
 # DietManager
 
-![Gif](./Gifs/Ingredient list.gif)
+![Gif](./Gifs/Ingredient_list.gif)
 
 ## What
 DietManager is a tool designed to help users plan and modify their weekly diets with ease. 
