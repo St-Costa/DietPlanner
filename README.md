@@ -2,7 +2,7 @@
 
 ![Gif](./img/ingredient_list_animated.gif)
 
-## What
+## What is this
 DietPlanner is a tool designed to help users plan and modify their weekly diets with ease.   
 It enables proactive meal planning for users aiming for body recomposition or other nutrition goals.
 
