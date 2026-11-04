@@ -1,5 +1,11 @@
 # DietPlanner
 
+> **Archived.** This is the first version (Dec 2024 – Feb 2025), kept for history.
+> It was rewritten from scratch as [DietPlanner 2.0](https://github.com/St-Costa/DietPlanner-2.0)
+> (SvelteKit + Bun), which implements the daily plans, nutrient tracking and grocery list
+> left unchecked below.
+
+
 ![Gif](./img/ingredient_list_animated.gif)
 
 ## What is this
